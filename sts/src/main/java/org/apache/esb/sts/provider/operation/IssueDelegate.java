@@ -122,8 +122,10 @@ public class IssueDelegate implements IssueOperation {
 			try {
 				X509Certificate certificate = getCertificateFromRequest(requestObject);
 				if (certificate != null) {
-					verifyCertificate(certificate);					
-					username = certificate.getSubjectX500Principal().getName();
+					boolean  verified = verifyCertificate(certificate);
+					if(verified) {
+						username = certificate.getSubjectX500Principal().getName();
+					}
 				}
 			} catch (CertificateException e) {
 				throw new STSException(

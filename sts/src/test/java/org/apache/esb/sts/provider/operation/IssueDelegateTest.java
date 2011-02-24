@@ -41,6 +41,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import junit.framework.TestCase;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.UseKeyType;
@@ -132,6 +133,7 @@ public class IssueDelegateTest {
 	}
 	
 	@Test
+	@Ignore
 	public void TestIssueDelegateWithCert() throws CertificateException	{
 		IssueDelegate id = new IssueDelegate();
 		assertNotNull(id);
