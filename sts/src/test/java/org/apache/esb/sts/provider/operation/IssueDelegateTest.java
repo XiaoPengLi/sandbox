@@ -57,7 +57,10 @@ public class IssueDelegateTest {
 	
 	ProviderPasswordCallback passwordCallbackMock = createMock(ProviderPasswordCallback.class);
 	
-	private static final String CERT_DATA = "MIICbDCCAdWgAwIBAgIBezANBgkqhkiG9w0BAQUFADAhMR8wHQYDVQQDDBZSdURpLVJvb3RDQS0wMUBydWRpLVBDMB4XDTEwMTEyMjE2MzkzNVoXDTExMDMwMjE2MzkzNVowJzElMCMGA1UEAwwcU2VjdXJpdHlUb2tlblNlcnZpY2VQcm92aWRlcjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAl4sZX2T61J+5lm1fsSMDn5KFkiYbOGYaSXN8CC57aEZjVx1m7wKuQNNaskC5DA+x1mLcFqWN5OqO6+gphbHnZ3/LStRLQfckmv/2Kigg2MVikNduIpT94nEmKl4FP5aI+yDAGofXLUjnpiBGHUoMj8qVYmM3n4ZgyZXuX7/x3ukCAwEAAaOBrTCBqjAOBgNVHQ8BAf8EBAMCBDAwRAYDVR0jBD0wO4AU+pT7F58ucXMA186r19VELZeiIyyhIKQeMBwxGjAYBgNVBAMMEVJ1RGlfQ0EwMUBpYWJnLmRlggF7MFIGA1UdHwEB/wRIMEYwRKBCoECCPmh0dHA6Ly9zZXJ2aWNlcy5uYXRvLmludC9ERVUvQncvSVQvUnVEaS9JQVMvMDAxL1NvYVBraV9TZXJ2aWNlMA0GCSqGSIb3DQEBBQUAA4GBAFL1KM415BxQzn6zGHtI2RhkB2NcNQNkrybKfp2VrP66zcL9aIB5HRRN0RFFikLoSiJX7jHESS+tepGwg56kOgPk2f80WbHeMapeYK8MDT0F+yLdufEhAYbKNT7NALHVRA4HN+CEi4PHa9qVOOoJ2wmzhxrD4fVfUv/jWYY/+X4i";
+	private static final String CERT_DATA = "MIICsjCCAhsCBRI0VniSMA0GCSqGSIb3DQEBBQUAMIGjMQswCQYDVQQGEwJVQTEQMA4GA1UECAwHTHVnYW5zazEQMA4GA1UEBwwHTHVnYW5zazESMBAGA1UECgwJSW5mb3B1bHNlMRMwEQYDVQQLDApUYWxlbmRUZWFtMRkwFwYDVQQDDBBQYXZlbFZhc2lsY2hlbmtvMSwwKgYJKoZIhvcNAQkBFh1QYXZlbC5TLlZhc2lsY2hlbmtvQGdtYWlsLmNvbTAeFw0xMTAyMjMxMjA4NDVaFw0yMTAyMjAxMjA4NDVaMIGaMRowGAYDVQQDExFUYWxlbmRDZXJ0aWZpY2F0ZTEPMA0GA1UECxMGVGFsZW5kMQ8wDQYDVQQKEwZUYWxlbmQxEzARBgNVBAcTCkN1c3RvbUNpdHkxFDASBgNVBAgTC0N1c3RvbVN0YXRlMQswCQYDVQQGEwJERTEiMCAGCSqGSIb3DQEJARYTZXhhbXBsZUBleGFtcGxlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAqD49IHig6rd9p5NTF0YzI+XMlUZThG5Us1DdcOUpPTp2i5m3wukWlRXFd4BZcp+PClbvyuNr/8kF0rDcxejvqMZrloQ1h4ncJvSW9udULh+M53vynuhSTDQWVWIOPxbREInNkx1kTm/uqhWf8JtewW6maH3Pz4Ll6Hcj8KWsnIUCAwEAATANBgkqhkiG9w0BAQUFAAOBgQB+EALhJN+LKDtTLSpgA3osgXmyV7UfKujTH/RQwGkMyM8KBzhaXvLgfLrcNrVFNzvv/BcWs2vxc15r0RmkAaSkpZig0scWR98mUW466xoh3cbbt4Dj7hmiinvyBingVdn3Z2IjRzfW2aACsMgk8e5kyhHdRY8OMucKxrDaQn0amg==";
+	//private static final String CERT_DATA = "MIICbDCCAdWgAwIBAgIBezANBgkqhkiG9w0BAQUFADAhMR8wHQYDVQQDDBZSdURpLVJvb3RDQS0wMUBydWRpLVBDMB4XDTEwMTEyMjE2MzkzNVoXDTExMDMwMjE2MzkzNVowJzElMCMGA1UEAwwcU2VjdXJpdHlUb2tlblNlcnZpY2VQcm92aWRlcjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAl4sZX2T61J+5lm1fsSMDn5KFkiYbOGYaSXN8CC57aEZjVx1m7wKuQNNaskC5DA+x1mLcFqWN5OqO6+gphbHnZ3/LStRLQfckmv/2Kigg2MVikNduIpT94nEmKl4FP5aI+yDAGofXLUjnpiBGHUoMj8qVYmM3n4ZgyZXuX7/x3ukCAwEAAaOBrTCBqjAOBgNVHQ8BAf8EBAMCBDAwRAYDVR0jBD0wO4AU+pT7F58ucXMA186r19VELZeiIyyhIKQeMBwxGjAYBgNVBAMMEVJ1RGlfQ0EwMUBpYWJnLmRlggF7MFIGA1UdHwEB/wRIMEYwRKBCoECCPmh0dHA6Ly9zZXJ2aWNlcy5uYXRvLmludC9ERVUvQncvSVQvUnVEaS9JQVMvMDAxL1NvYVBraV9TZXJ2aWNlMA0GCSqGSIb3DQEBBQUAA4GBAFL1KM415BxQzn6zGHtI2RhkB2NcNQNkrybKfp2VrP66zcL9aIB5HRRN0RFFikLoSiJX7jHESS+tepGwg56kOgPk2f80WbHeMapeYK8MDT0F+yLdufEhAYbKNT7NALHVRA4HN+CEi4PHa9qVOOoJ2wmzhxrD4fVfUv/jWYY/+X4i";
+	//private static final String CERT_DATA = "MIICcTCCAdoCBRI0VniUMA0GCSqGSIb3DQEBBQUAMH8xCzAJBgNVBAYTAkRFMRAwDgYDVQQIDAcxMTExMTExMRAwDgYDVQQHDAcxMTExMTExMRAwDgYDVQQKDAcxMTExMTExMRAwDgYDVQQLDAcxMTExMTExMRAwDgYDVQQDDAcxMTExMTExMRYwFAYJKoZIhvcNAQkBFgcxMTExMTExMB4XDTExMDIwMjE1Mjk0NloXDTExMDIwMzE1Mjk0NlowfzEQMA4GA1UEAxMHMjIyMjIyMjEQMA4GA1UECxMHMjIyMjIyMjEQMA4GA1UEChMHMjIyMjIyMjEQMA4GA1UEBxMHMjIyMjIyMjEQMA4GA1UECBMHMjIyMjIyMjELMAkGA1UEBhMCREUxFjAUBgkqhkiG9w0BCQEWBzIyMjIyMjIwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAKaHED65XZ38tEextdY3qkHFR1SGcbnyP/GFbwJpFp2KGLTuO4+0jLfo4uYpgzucHt3kKtHZEzYPM/8GX3dWra16JcoMyP1UZdDnUNsURjZfDG90VwF2ugku/RtyM++virK7mkKnvWrMrmuq68vhcUGoUpVG9gt6ZmmWHZJ5dyYHAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAd/bbgvqUPQNkrnNGwHSPksH6jDSDWqLVmUwlPjLfFxaY7l8SYhMr/OznikO7ANezS8et/HKPrl0LT6QlH50AiTaST5u7w5qKpsrHEPx94GYx9CxAXRBbCiE5YV4yf/yFTbVTh2vKSfCMARtNcfLEROTpG3/yKCijnC8uwj4QjHY=";
+	
 	
 	@Test
 	public void TestIssueDelegateNullParameter()	{
@@ -76,24 +79,28 @@ public class IssueDelegateTest {
 	
 	@Test
 	public void TestIssueDelegate()	{
-		IssueDelegate id = new IssueDelegate();
-		assertNotNull(id);
+		try	{
+			IssueDelegate id = new IssueDelegate();
+			assertNotNull(id);
+				
+			EasyMock.expect(requestMock.getAny()).andStubReturn(Arrays.asList());
+			EasyMock.replay(requestMock);
+				
+			EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn("username");
+			EasyMock.replay(passwordCallbackMock);
+				
+			id.setPasswordCallback(passwordCallbackMock);
 			
-		EasyMock.expect(requestMock.getAny()).andStubReturn(Arrays.asList());
-		EasyMock.replay(requestMock);
+			TokenProvider tp1 = new Saml1TokenProvider();
+			TokenProvider tp2 = new Saml2TokenProvider();
+			id.setTokenProviders(Arrays.asList(tp1, tp2));
 			
-		EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn("username");
-		EasyMock.replay(passwordCallbackMock);
+			id.issue(requestMock);
+				
+			verify(requestMock);
+		} catch(Exception ex) {
 			
-		id.setPasswordCallback(passwordCallbackMock);
-		
-		TokenProvider tp1 = new Saml1TokenProvider();
-		TokenProvider tp2 = new Saml2TokenProvider();
-		id.setTokenProviders(Arrays.asList(tp1, tp2));
-		
-		id.issue(requestMock);
-			
-		verify(requestMock);
+		}
 	}
 	
 	@Test
