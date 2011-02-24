@@ -32,8 +32,7 @@ public class ProviderPasswordCallback implements CallbackHandler {
 				String userPassword = pc.getPassword();
 
 				try {
-					Document document = DOMUtils.readXml(new StreamSource(new File(
-							"src/main/resources/tomcat-users.xml")));
+					Document document = DOMUtils.readXml(this.getClass().getResourceAsStream("/tomcat-users.xml"));
 					NodeList users = document.getElementsByTagName("user");
 					for (int userIndex = 0; userIndex < users.getLength(); userIndex++) {
 						Node currentUser = users.item(userIndex);
