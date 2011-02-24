@@ -54,7 +54,6 @@ import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestedSecurityTokenType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.UseKeyType;
 import org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.KeyIdentifierType;
 import org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.SecurityTokenReferenceType;
-import org.opensaml.common.xml.SAMLConstants;
 import org.w3._2000._09.xmldsig.KeyInfoType;
 import org.w3._2000._09.xmldsig.X509DataType;
 import org.w3c.dom.Element;
@@ -156,9 +155,6 @@ public class IssueDelegate implements IssueOperation {
 			throw new STSException("No credentials provided");
 		}
 
-		// should be removed after proper request
-		tokenType = SAMLConstants.SAML1_NS;
-		// tokenType = SAMLConstants.SAML20_NS;
 		if (tokenType == null) {
 			throw new STSException("No token type requested");
 		}
