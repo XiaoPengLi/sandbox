@@ -2,6 +2,7 @@ package org.apache.esb.sts.provider.operation;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -12,10 +13,13 @@ import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.PKIXCertPathBuilderResult;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.crypto.dsig.CanonicalizationMethod;
@@ -39,6 +43,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.esb.sts.provider.ProviderPasswordCallback;
 import org.apache.esb.sts.provider.STSException;
 import org.apache.esb.sts.provider.SecurityTokenServiceImpl;
+import org.apache.esb.sts.provider.cert.CertificateVerificationException;
+import org.apache.esb.sts.provider.cert.CertificateVerifier;
 import org.apache.esb.sts.provider.token.TokenProvider;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseCollectionType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseType;
@@ -55,19 +61,19 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-
 public class IssueDelegate implements IssueOperation {
 
 	private static final Log LOG = LogFactory
 			.getLog(SecurityTokenServiceImpl.class.getName());
 	private static final org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory WS_TRUST_FACTORY = new org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory();
 	private static final org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.ObjectFactory WSSE_FACTORY = new org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.ObjectFactory();
-	
+
 	private static final String SIGN_FACTORY_TYPE = "DOM";
 	private static final String JKS_INSTANCE = "JKS";
 	private static final String X_509 = "X.509";
 
-	private static final QName QNAME_WST_TOKEN_TYPE = WS_TRUST_FACTORY.createTokenType("").getName();
+	private static final QName QNAME_WST_TOKEN_TYPE = WS_TRUST_FACTORY
+			.createTokenType("").getName();
 
 	private ProviderPasswordCallback passwordCallback;
 	private List<TokenProvider> tokenProviders;
@@ -78,6 +84,31 @@ public class IssueDelegate implements IssueOperation {
 
 	public void setTokenProviders(List<TokenProvider> tokenProviders) {
 		this.tokenProviders = tokenProviders;
+	}
+
+	private boolean verifyCertificate(X509Certificate certificate)
+			throws KeyStoreException, NoSuchAlgorithmException,
+			CertificateException, FileNotFoundException, IOException {
+		char[] storepass = "atleast8".toCharArray();
+		String alias = "cacert";
+		KeyStore ks = KeyStore.getInstance(JKS_INSTANCE);
+
+		ks.load(this.getClass().getResourceAsStream("/sts.jks"), storepass);
+		java.security.cert.Certificate stsCert = ks.getCertificate(alias);
+
+		Set<X509Certificate> trustedRootCerts = new HashSet<X509Certificate>();
+		trustedRootCerts.add((X509Certificate) stsCert);
+
+		PKIXCertPathBuilderResult result = null;
+		try {
+			result = CertificateVerifier.verifyCertificate(certificate,
+					trustedRootCerts);
+			return true;
+		} catch (CertificateVerificationException e) {
+			// Certificate not valid
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	@Override
@@ -92,51 +123,65 @@ public class IssueDelegate implements IssueOperation {
 			try {
 				X509Certificate certificate = getCertificateFromRequest(requestObject);
 				if (certificate != null) {
-					username = certificate.getIssuerX500Principal().getName();
+					verifyCertificate(certificate);					
+					username = certificate.getSubjectX500Principal().getName();
 				}
 			} catch (CertificateException e) {
-				throw new STSException("Can't extract X509 certificate from request", e);
+				throw new STSException(
+						"Can't extract X509 certificate from request", e);
+			} catch (KeyStoreException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 
 			// TokenType
-			if(requestObject instanceof JAXBElement) {
-				JAXBElement<?> jaxbElement = (JAXBElement<?>)requestObject;
-				if(QNAME_WST_TOKEN_TYPE.equals(jaxbElement.getName())) {
-					tokenType = (String)jaxbElement.getValue();
+			if (requestObject instanceof JAXBElement) {
+				JAXBElement<?> jaxbElement = (JAXBElement<?>) requestObject;
+				if (QNAME_WST_TOKEN_TYPE.equals(jaxbElement.getName())) {
+					tokenType = (String) jaxbElement.getValue();
 				}
 			}
 		}
 
-		if(username == null) {
+		if (username == null) {
 			throw new STSException("No credentials provided");
 		}
 
 		// should be removed after proper request
 		tokenType = SAMLConstants.SAML1_NS;
-//		tokenType = SAMLConstants.SAML20_NS;
-		if(tokenType == null) {
+		// tokenType = SAMLConstants.SAML20_NS;
+		if (tokenType == null) {
 			throw new STSException("No token type requested");
 		}
-		
+
 		TokenProvider tokenProvider = null;
 		for (TokenProvider tp : tokenProviders) {
-			if(tokenType.equals(tp.getTokenType())) {
+			if (tokenType.equals(tp.getTokenType())) {
 				tokenProvider = tp;
 				break;
 			}
 		}
-		if(tokenProvider == null) {
-			throw new STSException("No token provider found for requested token type: " + tokenType);
+		if (tokenProvider == null) {
+			throw new STSException(
+					"No token provider found for requested token type: "
+							+ tokenType);
 		}
-		
+
 		Element elementToken = tokenProvider.createToken(username);
 
 		signSAML(elementToken);
-		
+
 		RequestSecurityTokenResponseType response = wrapAssertionToResponse(
-				tokenType,
-				elementToken,
-				tokenProvider.getTokenId(elementToken));
+				tokenType, elementToken, tokenProvider.getTokenId(elementToken));
 
 		RequestSecurityTokenResponseCollectionType responseCollection = WS_TRUST_FACTORY
 				.createRequestSecurityTokenResponseCollectionType();
@@ -146,19 +191,18 @@ public class IssueDelegate implements IssueOperation {
 	}
 
 	private RequestSecurityTokenResponseType wrapAssertionToResponse(
-			String tokenType,
-			Element samlAssertion,
-			String tokenId) {
+			String tokenType, Element samlAssertion, String tokenId) {
 		RequestSecurityTokenResponseType response = WS_TRUST_FACTORY
 				.createRequestSecurityTokenResponseType();
 
 		// TokenType
-		JAXBElement<String> jaxbTokenType = WS_TRUST_FACTORY.createTokenType(tokenType);
+		JAXBElement<String> jaxbTokenType = WS_TRUST_FACTORY
+				.createTokenType(tokenType);
 		response.getAny().add(jaxbTokenType);
 
 		// RequestedSecurityToken
 		RequestedSecurityTokenType requestedTokenType = WS_TRUST_FACTORY
-			.createRequestedSecurityTokenType();
+				.createRequestedSecurityTokenType();
 		JAXBElement<RequestedSecurityTokenType> requestedToken = WS_TRUST_FACTORY
 				.createRequestedSecurityToken(requestedTokenType);
 		requestedTokenType.setAny(samlAssertion);
@@ -166,37 +210,45 @@ public class IssueDelegate implements IssueOperation {
 
 		// RequestedAttachedReference
 		RequestedReferenceType requestedReferenceType = WS_TRUST_FACTORY
-			.createRequestedReferenceType();
-		SecurityTokenReferenceType securityTokenReferenceType = WSSE_FACTORY.
-			createSecurityTokenReferenceType();
+				.createRequestedReferenceType();
+		SecurityTokenReferenceType securityTokenReferenceType = WSSE_FACTORY
+				.createSecurityTokenReferenceType();
 		KeyIdentifierType keyIdentifierType = WSSE_FACTORY
-			.createKeyIdentifierType();
+				.createKeyIdentifierType();
 		keyIdentifierType.setValue(tokenId);
 		JAXBElement<KeyIdentifierType> keyIdentifier = WSSE_FACTORY
-			.createKeyIdentifier(keyIdentifierType);
+				.createKeyIdentifier(keyIdentifierType);
 		securityTokenReferenceType.getAny().add(keyIdentifier);
-		requestedReferenceType.setSecurityTokenReference(securityTokenReferenceType);
+		requestedReferenceType
+				.setSecurityTokenReference(securityTokenReferenceType);
 
 		JAXBElement<RequestedReferenceType> requestedAttachedReference = WS_TRUST_FACTORY
-			.createRequestedAttachedReference(requestedReferenceType);
+				.createRequestedAttachedReference(requestedReferenceType);
 		response.getAny().add(requestedAttachedReference);
 
 		return response;
 	}
 
-	private X509Certificate getCertificateFromRequest(Object requestObject) throws CertificateException {
+	private X509Certificate getCertificateFromRequest(Object requestObject)
+			throws CertificateException {
 		UseKeyType useKeyType = extractType(requestObject, UseKeyType.class);
-		if(null != useKeyType) {
-			KeyInfoType keyInfoType = extractType(useKeyType.getAny(), KeyInfoType.class);
-			if(null != keyInfoType) {
+		if (null != useKeyType) {
+			KeyInfoType keyInfoType = extractType(useKeyType.getAny(),
+					KeyInfoType.class);
+			if (null != keyInfoType) {
 				for (Object keyInfoContent : keyInfoType.getContent()) {
-					X509DataType x509DataType = extractType(keyInfoContent, X509DataType.class);
+					X509DataType x509DataType = extractType(keyInfoContent,
+							X509DataType.class);
 					if (null != x509DataType) {
-						for (Object x509Object : x509DataType.getX509IssuerSerialOrX509SKIOrX509SubjectName()) {
+						for (Object x509Object : x509DataType
+								.getX509IssuerSerialOrX509SKIOrX509SubjectName()) {
 							byte[] x509 = extractType(x509Object, byte[].class);
-							if(null != x509) {
-								CertificateFactory cf = CertificateFactory.getInstance(X_509);
-								Certificate certificate = cf.generateCertificate(new ByteArrayInputStream(x509));
+							if (null != x509) {
+								CertificateFactory cf = CertificateFactory
+										.getInstance(X_509);
+								Certificate certificate = cf
+										.generateCertificate(new ByteArrayInputStream(
+												x509));
 								X509Certificate ret = (X509Certificate) certificate;
 								return ret;
 							}
@@ -210,22 +262,22 @@ public class IssueDelegate implements IssueOperation {
 
 	@SuppressWarnings("unchecked")
 	private static final <T> T extractType(Object param, Class<T> clazz) {
-		if(param instanceof JAXBElement) {
-			JAXBElement<?> jaxbElement = (JAXBElement<?>)param;
+		if (param instanceof JAXBElement) {
+			JAXBElement<?> jaxbElement = (JAXBElement<?>) param;
 			if (clazz == jaxbElement.getDeclaredType()) {
-				return (T)jaxbElement.getValue();
+				return (T) jaxbElement.getValue();
 			}
 		}
 		return null;
 	}
-	
+
 	private void signSAML(Element assertionDocument) {
 
 		InputStream isKeyStore = this.getClass()
 				.getResourceAsStream("/sts.jks");
-		String keyAlias = "SecurityTokenServiceProvider";
-		String storePwd = "anfang";
-		String keyPwd = "anfang";
+		String keyAlias = "securitytokenserviceprovider";
+		String storePwd = "atleast8";
+		String keyPwd = "empty";
 
 		KeyStoreInfo keyStoreInfo = new KeyStoreInfo(isKeyStore, storePwd,
 				keyAlias, keyPwd);
