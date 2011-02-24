@@ -13,7 +13,6 @@ import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.PKIXCertPathBuilderResult;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,13 +37,11 @@ import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import javax.xml.namespace.QName;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.esb.sts.provider.ProviderPasswordCallback;
 import org.apache.esb.sts.provider.STSException;
-import org.apache.esb.sts.provider.SecurityTokenServiceImpl;
 import org.apache.esb.sts.provider.cert.CertificateVerificationException;
 import org.apache.esb.sts.provider.cert.CertificateVerifier;
+import org.apache.esb.sts.provider.cert.CertificateVerifierConfig;
 import org.apache.esb.sts.provider.token.TokenProvider;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseCollectionType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseType;
@@ -54,7 +51,6 @@ import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestedSecurityTokenType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.UseKeyType;
 import org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.KeyIdentifierType;
 import org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.SecurityTokenReferenceType;
-import org.opensaml.common.xml.SAMLConstants;
 import org.w3._2000._09.xmldsig.KeyInfoType;
 import org.w3._2000._09.xmldsig.X509DataType;
 import org.w3c.dom.Element;
@@ -63,8 +59,6 @@ import org.w3c.dom.NodeList;
 
 public class IssueDelegate implements IssueOperation {
 
-	private static final Log LOG = LogFactory
-			.getLog(SecurityTokenServiceImpl.class.getName());
 	private static final org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory WS_TRUST_FACTORY = new org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory();
 	private static final org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.ObjectFactory WSSE_FACTORY = new org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.ObjectFactory();
 
@@ -77,6 +71,7 @@ public class IssueDelegate implements IssueOperation {
 
 	private ProviderPasswordCallback passwordCallback;
 	private List<TokenProvider> tokenProviders;
+	private CertificateVerifierConfig certificateVerifierConfig;
 
 	public void setPasswordCallback(ProviderPasswordCallback passwordCallback) {
 		this.passwordCallback = passwordCallback;
@@ -85,62 +80,26 @@ public class IssueDelegate implements IssueOperation {
 	public void setTokenProviders(List<TokenProvider> tokenProviders) {
 		this.tokenProviders = tokenProviders;
 	}
-
-	private boolean verifyCertificate(X509Certificate certificate)
-			throws KeyStoreException, NoSuchAlgorithmException,
-			CertificateException, FileNotFoundException, IOException {
-		char[] storepass = "atleast8".toCharArray();
-		String alias = "cacert";
-		KeyStore ks = KeyStore.getInstance(JKS_INSTANCE);
-
-		ks.load(this.getClass().getResourceAsStream("/sts.jks"), storepass);
-		java.security.cert.Certificate stsCert = ks.getCertificate(alias);
-
-		Set<X509Certificate> trustedRootCerts = new HashSet<X509Certificate>();
-		trustedRootCerts.add((X509Certificate) stsCert);
-
-		PKIXCertPathBuilderResult result = null;
-		try {
-			result = CertificateVerifier.verifyCertificate(certificate,
-					trustedRootCerts);
-			return true;
-		} catch (CertificateVerificationException e) {
-			// Certificate not valid
-			e.printStackTrace();
-		}
-		return false;
+	
+	public void setCertificateVerifierConfig(CertificateVerifierConfig certificateVerifierConfig) {
+		this.certificateVerifierConfig = certificateVerifierConfig;
 	}
 
 	@Override
 	public RequestSecurityTokenResponseCollectionType issue(
 			RequestSecurityTokenType request) {
 
-		String username = passwordCallback.resetUsername();
 		String tokenType = null;
+		X509Certificate certificate = null;
 
+		// parse input arguments
 		for (Object requestObject : request.getAny()) {
 			// certificate
 			try {
-				X509Certificate certificate = getCertificateFromRequest(requestObject);
-				if (certificate != null) {
-					verifyCertificate(certificate);					
-					username = certificate.getSubjectX500Principal().getName();
-				}
+				certificate = getCertificateFromRequest(requestObject);
 			} catch (CertificateException e) {
 				throw new STSException(
 						"Can't extract X509 certificate from request", e);
-			} catch (KeyStoreException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 
 			// TokenType
@@ -152,17 +111,27 @@ public class IssueDelegate implements IssueOperation {
 			}
 		}
 
+		// check input arguments
+		String username = passwordCallback.resetUsername();
+		if (certificate != null) {
+			try {
+				verifyCertificate(certificate);
+				username = certificate.getSubjectX500Principal().getName();
+			} catch (Exception e) {
+				throw new STSException(
+						"Can't verify X509 certificate from request", e);
+			}
+		}
+
 		if (username == null) {
 			throw new STSException("No credentials provided");
 		}
 
-		// should be removed after proper request
-		tokenType = SAMLConstants.SAML1_NS;
-		// tokenType = SAMLConstants.SAML20_NS;
 		if (tokenType == null) {
 			throw new STSException("No token type requested");
 		}
 
+		// create token
 		TokenProvider tokenProvider = null;
 		for (TokenProvider tp : tokenProviders) {
 			if (tokenType.equals(tp.getTokenType())) {
@@ -180,14 +149,32 @@ public class IssueDelegate implements IssueOperation {
 
 		signSAML(elementToken);
 
+		// prepare response
 		RequestSecurityTokenResponseType response = wrapAssertionToResponse(
 				tokenType, elementToken, tokenProvider.getTokenId(elementToken));
 
 		RequestSecurityTokenResponseCollectionType responseCollection = WS_TRUST_FACTORY
 				.createRequestSecurityTokenResponseCollectionType();
 		responseCollection.getRequestSecurityTokenResponse().add(response);
-		LOG.info("Finished operation requestSecurityToken");
 		return responseCollection;
+	}
+
+	private void verifyCertificate(X509Certificate certificate)
+			throws KeyStoreException, NoSuchAlgorithmException,
+			CertificateException, FileNotFoundException, IOException, CertificateVerificationException {
+		KeyStore ks = KeyStore.getInstance(JKS_INSTANCE);
+
+		ks.load(this.getClass().getResourceAsStream(
+				certificateVerifierConfig.getStorePath()),
+				certificateVerifierConfig.getStorePwd().toCharArray());
+		java.security.cert.Certificate stsCert = ks
+				.getCertificate(certificateVerifierConfig.getKeyCertAlias());
+
+		Set<X509Certificate> trustedRootCerts = new HashSet<X509Certificate>();
+		trustedRootCerts.add((X509Certificate) stsCert);
+
+		CertificateVerifier.verifyCertificate(certificate,
+					trustedRootCerts);
 	}
 
 	private RequestSecurityTokenResponseType wrapAssertionToResponse(
@@ -274,13 +261,11 @@ public class IssueDelegate implements IssueOperation {
 	private void signSAML(Element assertionDocument) {
 
 		InputStream isKeyStore = this.getClass()
-				.getResourceAsStream("/sts.jks");
-		String keyAlias = "securitytokenserviceprovider";
-		String storePwd = "atleast8";
-		String keyPwd = "empty";
+				.getResourceAsStream(certificateVerifierConfig.getStorePath());
 
-		KeyStoreInfo keyStoreInfo = new KeyStoreInfo(isKeyStore, storePwd,
-				keyAlias, keyPwd);
+
+		KeyStoreInfo keyStoreInfo = new KeyStoreInfo(isKeyStore, certificateVerifierConfig.getStorePwd(),
+				certificateVerifierConfig.getKeySignAlias(), certificateVerifierConfig.getKeySignPwd());
 
 		signAssertion(assertionDocument, keyStoreInfo);
 	}
@@ -366,8 +351,7 @@ public class IssueDelegate implements IssueOperation {
 			signature.sign(dsc);
 
 		} catch (Exception e) {
-			LOG.error("Cannot sign xml document: " + e.getMessage(), e);
-			e.printStackTrace();
+			throw new STSException("Cannot sign xml document: " + e.getMessage(), e);
 		}
 	}
 

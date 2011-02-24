@@ -28,6 +28,7 @@ http://www.springframework.org/schema/util http://www.springframework.org/schema
 		class="org.apache.esb.sts.provider.operation.IssueDelegate">
 		<property name="passwordCallback" ref="passwordCallback"/>
 		<property name="tokenProviders" ref="tokenProviders"/>
+		<property name="certificateVerifierConfig" ref="certificateVerifierConfig"/>
 	</bean>
 	<bean id="keyExchangeTokenDelegate"
 		class="org.apache.esb.sts.provider.operation.KeyExchangeTokenDelegate"/>
@@ -71,5 +72,12 @@ http://www.springframework.org/schema/util http://www.springframework.org/schema
 		class="org.apache.esb.sts.provider.token.Saml1TokenProvider"/>
 	<bean id="saml2TokenProvider"
 		class="org.apache.esb.sts.provider.token.Saml2TokenProvider"/>
-
+	<bean id="certificateVerifierConfig"
+		class="org.apache.esb.sts.provider.cert.CertificateVerifierConfig">
+		<property name="storePath" value="/sts.jks"/>
+		<property name="storePwd" value="atleast8"/>
+		<property name="keyCertAlias" value="cacert"/>
+		<property name="keySignAlias" value="securitytokenserviceprovider"/>
+		<property name="keySignPwd" value="empty"/>
+	</bean>
 </beans>
