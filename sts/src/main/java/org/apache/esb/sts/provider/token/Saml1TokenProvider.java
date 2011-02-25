@@ -1,26 +1,43 @@
 package org.apache.esb.sts.provider.token;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 
 import org.joda.time.DateTime;
+import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.xml.security.x509.BasicX509Credential;
+import org.opensaml.xml.security.x509.X509KeyInfoGeneratorFactory;
+import org.opensaml.xml.signature.KeyInfo;
 import org.w3c.dom.Element;
 
 public class Saml1TokenProvider implements TokenProvider {
 
+	 	
 	@Override
 	public String getTokenType() {
 		return SAMLConstants.SAML1_NS;
 	}
 
 	@Override
+	public Element createToken(X509Certificate certificate) {
+	try {
+			org.opensaml.saml1.core.Subject subject = createSubjectSAML1(certificate);
+			org.opensaml.saml1.core.Assertion samlAssertion = createAuthnAssertionSAML1(subject);
+			return SamlUtils.toDom(samlAssertion).getDocumentElement();
+		} catch (Exception e) {
+			throw new TokenException("Can't serialize SAML assertion", e);
+		}
+	}
+	
+	@Override
 	public Element createToken(String username) {
+		try {
 		org.opensaml.saml1.core.Subject subject = createSubjectSAML1(username);
 		org.opensaml.saml1.core.Assertion samlAssertion = createAuthnAssertionSAML1(subject);
-		try {
-			return SamlUtils.toDom(samlAssertion).getDocumentElement();
+		return SamlUtils.toDom(samlAssertion).getDocumentElement();
 		} catch (Exception e) {
 			throw new TokenException("Can't serialize SAML assertion", e);
 		}
@@ -55,6 +72,28 @@ public class Saml1TokenProvider implements TokenProvider {
 
 			subject.setSubjectConfirmation(confirmation);
 		}
+		return subject;
+	}
+	
+	
+	private org.opensaml.saml1.core.Subject createSubjectSAML1(X509Certificate certificate) throws Exception{
+		DefaultBootstrap.bootstrap();
+		org.opensaml.saml1.core.NameIdentifier nameID = (new org.opensaml.saml1.core.impl.NameIdentifierBuilder()).buildObject();
+		nameID.setNameIdentifier(certificate.getSubjectDN().getName());
+		nameID.setFormat("urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName");
+		org.opensaml.saml1.core.Subject subject = (new org.opensaml.saml1.core.impl.SubjectBuilder()).buildObject();
+		subject.setNameIdentifier(nameID);
+		org.opensaml.saml1.core.ConfirmationMethod confirmationMethod = (new org.opensaml.saml1.core.impl.ConfirmationMethodBuilder()).buildObject();
+        confirmationMethod.setConfirmationMethod("Urn:oasis:names:tc:SAML:1.0:cm:holder-of-key");
+        org.opensaml.saml1.core.SubjectConfirmation confirmation = (new org.opensaml.saml1.core.impl.SubjectConfirmationBuilder()).buildObject();
+		confirmation.getConfirmationMethods().add(confirmationMethod);
+		BasicX509Credential keyInfoCredential = new BasicX509Credential();
+		keyInfoCredential.setEntityCertificate(certificate);
+        X509KeyInfoGeneratorFactory kiFactory = new X509KeyInfoGeneratorFactory();
+		kiFactory.setEmitPublicKeyValue(true);
+		KeyInfo keyInfo = kiFactory.newInstance().generate(keyInfoCredential);
+		confirmation.setKeyInfo(keyInfo);
+		subject.setSubjectConfirmation(confirmation);
 		return subject;
 	}
 	

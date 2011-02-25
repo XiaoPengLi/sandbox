@@ -153,7 +153,13 @@ public class IssueDelegate implements IssueOperation {
 							+ tokenType);
 		}
 
-		Element elementToken = tokenProvider.createToken(username);
+		Element elementToken = null;
+		
+		if(certificate != null){
+			elementToken = tokenProvider.createToken(certificate);
+		}else{
+			elementToken = tokenProvider.createToken(username);
+		}
 
 		String tokenId = tokenProvider.getTokenId(elementToken);
 		signSAML(elementToken, tokenId);
