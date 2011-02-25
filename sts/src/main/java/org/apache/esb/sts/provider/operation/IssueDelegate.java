@@ -36,7 +36,9 @@ import javax.xml.crypto.dsig.keyinfo.X509Data;
 import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import javax.xml.namespace.QName;
+import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.cxf.helpers.DOMUtils;
 import org.apache.esb.sts.provider.ProviderPasswordCallback;
 import org.apache.esb.sts.provider.STSException;
 import org.apache.esb.sts.provider.cert.CertificateVerificationException;
@@ -53,9 +55,12 @@ import org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.
 import org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.SecurityTokenReferenceType;
 import org.w3._2000._09.xmldsig.KeyInfoType;
 import org.w3._2000._09.xmldsig.X509DataType;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 public class IssueDelegate implements IssueOperation {
 
@@ -131,6 +136,9 @@ public class IssueDelegate implements IssueOperation {
 			throw new STSException("No token type requested");
 		}
 
+		if (certificate == null)
+			authenticate(username, passwordCallback.resetPassword());
+		
 		// create token
 		TokenProvider tokenProvider = null;
 		for (TokenProvider tp : tokenProviders) {
@@ -256,6 +264,42 @@ public class IssueDelegate implements IssueOperation {
 			}
 		}
 		return null;
+	}
+	
+	private void authenticate(String username, String password) {
+		try {
+			Document document = DOMUtils.readXml(this.getClass().getResourceAsStream("/tomcat-users.xml"));
+			NodeList users = document.getElementsByTagName("user");
+			for (int userIndex = 0; userIndex < users.getLength(); userIndex++) {
+				Node currentUser = users.item(userIndex);
+				Attr currentUsername = (Attr) currentUser
+						.getAttributes().getNamedItem("username");
+				Attr currentPassword = (Attr) currentUser
+						.getAttributes().getNamedItem("password");
+				
+				if (!username.equals(currentUsername.getTextContent())) {
+					if (userIndex == users.getLength()-1) {
+						throw new IOException("Wrong username");
+					}
+					continue;
+				} else {
+					if (!password.equals(currentPassword.getTextContent())) {
+						throw new IOException("Wrong password");
+					}
+					System.out.println("Authentication successful for " + username);
+					break;
+				}
+			}
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
 	}
 
 	private void signSAML(Element assertionDocument) {
