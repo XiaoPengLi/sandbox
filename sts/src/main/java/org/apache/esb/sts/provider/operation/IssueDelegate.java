@@ -153,11 +153,12 @@ public class IssueDelegate implements IssueOperation {
 
 		Element elementToken = tokenProvider.createToken(username);
 
-		signSAML(elementToken);
+		String tokenId = tokenProvider.getTokenId(elementToken);
+		signSAML(elementToken, tokenId);
 
 		// prepare response
 		RequestSecurityTokenResponseType response = wrapAssertionToResponse(
-				tokenType, elementToken, tokenProvider.getTokenId(elementToken));
+				tokenType, elementToken, tokenId);
 
 		RequestSecurityTokenResponseCollectionType responseCollection = WS_TRUST_FACTORY
 				.createRequestSecurityTokenResponseCollectionType();
@@ -293,7 +294,7 @@ public class IssueDelegate implements IssueOperation {
 		} 
 	}
 
-	private void signSAML(Element assertionDocument) {
+	private void signSAML(Element assertionDocument, String tokenId) {
 
 		InputStream isKeyStore = this.getClass()
 				.getResourceAsStream(certificateVerifierConfig.getStorePath());
@@ -302,17 +303,9 @@ public class IssueDelegate implements IssueOperation {
 		KeyStoreInfo keyStoreInfo = new KeyStoreInfo(isKeyStore, certificateVerifierConfig.getStorePwd(),
 				certificateVerifierConfig.getKeySignAlias(), certificateVerifierConfig.getKeySignPwd());
 
-		signAssertion(assertionDocument, keyStoreInfo);
-	}
+		signXML(assertionDocument, tokenId, keyStoreInfo);
 
-	private void signAssertion(Element assertion, KeyStoreInfo keyStoreInfo) {
-
-		String id = assertion.getAttribute("ID");
-		String refId = (id != null) ? "#" + id : "";
-
-		signXML(assertion, refId, keyStoreInfo);
-
-		shiftSignatureElementInSaml(assertion);
+//		shiftSignatureElementInSaml(assertion);
 	}
 
 	private void shiftSignatureElementInSaml(Element target) {
@@ -357,7 +350,7 @@ public class IssueDelegate implements IssueOperation {
 			Transform transform = signFactory.newTransform(
 					"http://www.w3.org/2000/09/xmldsig#enveloped-signature",
 					(TransformParameterSpec) null);
-			Reference ref = signFactory.newReference(refId, method,
+			Reference ref = signFactory.newReference('#' + refId, method,
 					Collections.singletonList(transform), null, null);
 
 			CanonicalizationMethod canonMethod = signFactory
