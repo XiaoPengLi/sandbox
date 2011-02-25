@@ -221,6 +221,11 @@ public class IssueDelegate implements IssueOperation {
 		JAXBElement<RequestedReferenceType> requestedAttachedReference = WS_TRUST_FACTORY
 				.createRequestedAttachedReference(requestedReferenceType);
 		response.getAny().add(requestedAttachedReference);
+		
+		// RequestedUnattachedReference
+		JAXBElement<RequestedReferenceType> requestedUnattachedReference = WS_TRUST_FACTORY
+			.createRequestedUnattachedReference(requestedReferenceType);
+		response.getAny().add(requestedUnattachedReference);
 
 		return response;
 	}
@@ -303,35 +308,35 @@ public class IssueDelegate implements IssueOperation {
 //		shiftSignatureElementInSaml(assertion);
 	}
 
-	private void shiftSignatureElementInSaml(Element target) {
-		NodeList nl = target.getElementsByTagNameNS(XMLSignature.XMLNS,
-				"Signature");
-		if (nl.getLength() == 0) {
-			return;
-		}
-		Element signatureElement = (Element) nl.item(0);
-
-		boolean foundIssuer = false;
-		Node elementAfterIssuer = null;
-		NodeList children = target.getChildNodes();
-		for (int i = 0; i < children.getLength(); i++) {
-			Node child = children.item(i);
-			if (foundIssuer) {
-				elementAfterIssuer = child;
-				break;
-			}
-			if (child.getNodeType() == Node.ELEMENT_NODE
-					&& child.getLocalName().equals("Issuer"))
-				foundIssuer = true;
-		}
-
-		// Place after the Issuer, or as first element if no Issuer:
-		if (!foundIssuer || elementAfterIssuer != null) {
-			target.removeChild(signatureElement);
-			target.insertBefore(signatureElement,
-					foundIssuer ? elementAfterIssuer : target.getFirstChild());
-		}
-	}
+//	private void shiftSignatureElementInSaml(Element target) {
+//		NodeList nl = target.getElementsByTagNameNS(XMLSignature.XMLNS,
+//				"Signature");
+//		if (nl.getLength() == 0) {
+//			return;
+//		}
+//		Element signatureElement = (Element) nl.item(0);
+//
+//		boolean foundIssuer = false;
+//		Node elementAfterIssuer = null;
+//		NodeList children = target.getChildNodes();
+//		for (int i = 0; i < children.getLength(); i++) {
+//			Node child = children.item(i);
+//			if (foundIssuer) {
+//				elementAfterIssuer = child;
+//				break;
+//			}
+//			if (child.getNodeType() == Node.ELEMENT_NODE
+//					&& child.getLocalName().equals("Issuer"))
+//				foundIssuer = true;
+//		}
+//
+//		// Place after the Issuer, or as first element if no Issuer:
+//		if (!foundIssuer || elementAfterIssuer != null) {
+//			target.removeChild(signatureElement);
+//			target.insertBefore(signatureElement,
+//					foundIssuer ? elementAfterIssuer : target.getFirstChild());
+//		}
+//	}
 
 	private void signXML(Element target, String refId, KeyStoreInfo keyStoreInfo) {
 
