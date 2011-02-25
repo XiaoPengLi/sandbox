@@ -4,6 +4,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 
 import org.joda.time.DateTime;
+import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.common.xml.SAMLConstants;
@@ -76,6 +77,7 @@ public class Saml1TokenProvider implements TokenProvider {
 	
 	
 	private org.opensaml.saml1.core.Subject createSubjectSAML1(X509Certificate certificate) throws Exception{
+		DefaultBootstrap.bootstrap();
 		org.opensaml.saml1.core.NameIdentifier nameID = (new org.opensaml.saml1.core.impl.NameIdentifierBuilder()).buildObject();
 		nameID.setNameIdentifier(certificate.getSubjectDN().getName());
 		nameID.setFormat("urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName");

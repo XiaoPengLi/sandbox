@@ -4,6 +4,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 
 import org.joda.time.DateTime;
+import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.Assertion;
@@ -26,6 +27,8 @@ import org.opensaml.saml2.core.impl.KeyInfoConfirmationDataTypeBuilder;
 import org.opensaml.saml2.core.impl.NameIDBuilder;
 import org.opensaml.saml2.core.impl.SubjectBuilder;
 import org.opensaml.saml2.core.impl.SubjectConfirmationBuilder;
+import org.opensaml.xml.security.credential.BasicKeyInfoGeneratorFactory;
+import org.opensaml.xml.security.keyinfo.KeyInfoGenerator;
 import org.opensaml.xml.security.x509.BasicX509Credential;
 import org.opensaml.xml.security.x509.X509KeyInfoGeneratorFactory;
 import org.opensaml.xml.signature.KeyInfo;
@@ -87,9 +90,10 @@ public class Saml2TokenProvider implements TokenProvider {
 	}
 
 	private Subject createSubject(X509Certificate certificate) throws Exception{
+		DefaultBootstrap.bootstrap();
 		NameID nameID = (new NameIDBuilder()).buildObject();
 		nameID.setValue(certificate.getSubjectDN().getName());
-		String format = "urn:oasis:names:tc:SAML:1.1:nameid- format:X509SubjectName";
+		String format = "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
 		if (format != null) {
 			nameID.setFormat(format);
 		}
@@ -101,8 +105,9 @@ public class Saml2TokenProvider implements TokenProvider {
 		KeyInfoConfirmationDataType keyInfoDataType = new KeyInfoConfirmationDataTypeBuilder().buildObject();
 		BasicX509Credential keyInfoCredential = new BasicX509Credential();
 		keyInfoCredential.setEntityCertificate(certificate);
-		X509KeyInfoGeneratorFactory kiFactory = new X509KeyInfoGeneratorFactory();
-        kiFactory.setEmitPublicKeyValue(true);
+		keyInfoCredential.setPublicKey(certificate.getPublicKey());
+		BasicKeyInfoGeneratorFactory kiFactory = new BasicKeyInfoGeneratorFactory();
+		kiFactory.setEmitPublicKeyValue(true);
 		KeyInfo keyInfo = kiFactory.newInstance().generate(keyInfoCredential);
 		keyInfoDataType.getKeyInfos().add(keyInfo);	
 		subject.getSubjectConfirmations().add(confirmation);
