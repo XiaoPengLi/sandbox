@@ -36,7 +36,6 @@ import javax.xml.crypto.dsig.keyinfo.X509Data;
 import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import javax.xml.namespace.QName;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.esb.sts.provider.ProviderPasswordCallback;
@@ -53,6 +52,7 @@ import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestedSecurityTokenType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.UseKeyType;
 import org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.KeyIdentifierType;
 import org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.SecurityTokenReferenceType;
+import org.opensaml.common.xml.SAMLConstants;
 import org.w3._2000._09.xmldsig.KeyInfoType;
 import org.w3._2000._09.xmldsig.X509DataType;
 import org.w3c.dom.Attr;
@@ -60,7 +60,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 public class IssueDelegate implements IssueOperation {
 
@@ -126,6 +125,8 @@ public class IssueDelegate implements IssueOperation {
 				throw new STSException(
 						"Can't verify X509 certificate from request", e);
 			}
+		} else {
+			authenticate(username, passwordCallback.resetPassword());
 		}
 
 		if (username == null) {
@@ -133,17 +134,9 @@ public class IssueDelegate implements IssueOperation {
 		}
 
 		if (tokenType == null) {
-			throw new STSException("No token type requested");
+			tokenType = SAMLConstants.SAML20_NS;
 		}
 
-		if (certificate == null)
-			try {
-				authenticate(username, passwordCallback.resetPassword());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				throw new STSException("Can not authenticate to STS provider for user " + username);
-			}
-		
 		// create token
 		TokenProvider tokenProvider = null;
 		for (TokenProvider tp : tokenProviders) {
@@ -271,7 +264,7 @@ public class IssueDelegate implements IssueOperation {
 		return null;
 	}
 	
-	private void authenticate(String username, String password) throws IOException {
+	private void authenticate(String username, String password) {
 		try {
 			Document document = DOMUtils.readXml(this.getClass().getResourceAsStream("/tomcat-users.xml"));
 			NodeList users = document.getElementsByTagName("user");
@@ -284,21 +277,19 @@ public class IssueDelegate implements IssueOperation {
 				
 				if (!username.equals(currentUsername.getTextContent())) {
 					if (userIndex == users.getLength()-1) {
-						throw new IOException("Wrong username");
+						throw new STSException("Wrong username");
 					}
 					continue;
 				} else {
 					if (!password.equals(currentPassword.getTextContent())) {
-						throw new IOException("Wrong password");
+						throw new STSException("Wrong password");
 					}
 					System.out.println("Authentication successful for " + username);
 					break;
 				}
 			}
-		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
+			throw new STSException("Erorr during authentication", e);
 		} 
 	}
 
