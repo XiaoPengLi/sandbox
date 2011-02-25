@@ -37,6 +37,7 @@ import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import javax.xml.namespace.QName;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.esb.sts.provider.ProviderPasswordCallback;
 import org.apache.esb.sts.provider.STSException;
@@ -44,6 +45,7 @@ import org.apache.esb.sts.provider.cert.CertificateVerificationException;
 import org.apache.esb.sts.provider.cert.CertificateVerifier;
 import org.apache.esb.sts.provider.cert.CertificateVerifierConfig;
 import org.apache.esb.sts.provider.token.TokenProvider;
+import org.apache.xerces.dom.ElementNSImpl;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseCollectionType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
@@ -227,27 +229,20 @@ public class IssueDelegate implements IssueOperation {
 			throws CertificateException {
 		UseKeyType useKeyType = extractType(requestObject, UseKeyType.class);
 		if (null != useKeyType) {
-			KeyInfoType keyInfoType = extractType(useKeyType.getAny(),
-					KeyInfoType.class);
-			if (null != keyInfoType) {
-				for (Object keyInfoContent : keyInfoType.getContent()) {
-					X509DataType x509DataType = extractType(keyInfoContent,
-							X509DataType.class);
-					if (null != x509DataType) {
-						for (Object x509Object : x509DataType
-								.getX509IssuerSerialOrX509SKIOrX509SubjectName()) {
-							byte[] x509 = extractType(x509Object, byte[].class);
-							if (null != x509) {
-								CertificateFactory cf = CertificateFactory
-										.getInstance(X_509);
-								Certificate certificate = cf
-										.generateCertificate(new ByteArrayInputStream(
-												x509));
-								X509Certificate ret = (X509Certificate) certificate;
-								return ret;
-							}
-						}
-					}
+			ElementNSImpl elementNSImpl = (ElementNSImpl) useKeyType.getAny();
+			NodeList x509CertData = elementNSImpl
+					.getElementsByTagName("X509Certificate");
+			if (x509CertData != null && x509CertData.getLength() > 0) {
+				byte[] x509CertBytes = Base64.decodeBase64(x509CertData.item(0)
+						.getTextContent().getBytes());
+				if (x509CertBytes != null) {
+					CertificateFactory cf = CertificateFactory
+							.getInstance(X_509);
+					Certificate certificate = cf
+							.generateCertificate(new ByteArrayInputStream(
+									x509CertBytes));
+					X509Certificate x509Cert = (X509Certificate) certificate;
+					return x509Cert;
 				}
 			}
 		}
