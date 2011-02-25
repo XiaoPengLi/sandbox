@@ -137,7 +137,12 @@ public class IssueDelegate implements IssueOperation {
 		}
 
 		if (certificate == null)
-			authenticate(username, passwordCallback.resetPassword());
+			try {
+				authenticate(username, passwordCallback.resetPassword());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				throw new STSException("Can not authenticate to STS provider for user " + username);
+			}
 		
 		// create token
 		TokenProvider tokenProvider = null;
@@ -266,7 +271,7 @@ public class IssueDelegate implements IssueOperation {
 		return null;
 	}
 	
-	private void authenticate(String username, String password) {
+	private void authenticate(String username, String password) throws IOException {
 		try {
 			Document document = DOMUtils.readXml(this.getClass().getResourceAsStream("/tomcat-users.xml"));
 			NodeList users = document.getElementsByTagName("user");
@@ -292,13 +297,8 @@ public class IssueDelegate implements IssueOperation {
 			}
 		} catch (SAXException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (ParserConfigurationException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} 
 	}
 
