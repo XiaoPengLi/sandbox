@@ -7,6 +7,7 @@ import org.apache.cxf.bus.spring.SpringBusFactory;
 import org.apache.cxf.ws.security.trust.STSClient;
 import org.apache.esb.sts.provider.ProviderPasswordCallback;
 import org.apache.esb.sts.provider.STSException;
+import org.apache.esb.sts.provider.cert.CertificateVerifierConfig;
 import org.apache.esb.sts.provider.token.Saml1TokenProvider;
 import org.apache.esb.sts.provider.token.Saml2TokenProvider;
 import org.apache.esb.sts.provider.token.TokenProvider;
@@ -79,57 +80,53 @@ public class IssueDelegateTest {
 	}
 	
 	@Test
+	@Ignore
 	public void TestIssueDelegate()	{
-		try	{
-			IssueDelegate id = new IssueDelegate();
-			assertNotNull(id);
-				
-			EasyMock.expect(requestMock.getAny()).andStubReturn(Arrays.asList());
-			EasyMock.replay(requestMock);
-				
-			EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn("username");
-			EasyMock.replay(passwordCallbackMock);
-				
-			id.setPasswordCallback(passwordCallbackMock);
+		IssueDelegate id = new IssueDelegate();
+		//id.setCertificateVerifierConfig()
 			
-			TokenProvider tp1 = new Saml1TokenProvider();
-			TokenProvider tp2 = new Saml2TokenProvider();
-			id.setTokenProviders(Arrays.asList(tp1, tp2));
+		EasyMock.expect(requestMock.getAny()).andStubReturn(Arrays.asList());
+		EasyMock.replay(requestMock);
 			
-			id.issue(requestMock);
-				
-			verify(requestMock);
-		} catch(Exception ex) {
+		EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn("joe");
+		EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn("joespassword");
+		EasyMock.replay(passwordCallbackMock);
+
+		id.setPasswordCallback(passwordCallbackMock);
+		
+		TokenProvider tp1 = new Saml1TokenProvider();
+		TokenProvider tp2 = new Saml2TokenProvider();
+		id.setTokenProviders(Arrays.asList(tp1, tp2));
+		
+		id.issue(requestMock);
 			
-		}
+		verify(requestMock);
 	}
 	
 	@Test
 	public void TestIssueDelegateUsernameNull()	{
+		IssueDelegate id = new IssueDelegate();
+		assertNotNull(id);
+		
+		EasyMock.expect(requestMock.getAny()).andStubReturn(Arrays.asList());
+		EasyMock.replay(requestMock);
+		
+		EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(null);
+		EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn("password");
+		EasyMock.replay(passwordCallbackMock);
+		
+		id.setPasswordCallback(passwordCallbackMock);
+		
+		TokenProvider tp1 = new Saml1TokenProvider();
+		TokenProvider tp2 = new Saml2TokenProvider();
+		id.setTokenProviders(Arrays.asList(tp1, tp2));
+
 		try	{
-			IssueDelegate id = new IssueDelegate();
-			assertNotNull(id);
-			
-			EasyMock.expect(requestMock.getAny()).andStubReturn(Arrays.asList());
-			EasyMock.replay(requestMock);
-			
-			EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(null);
-			EasyMock.replay(passwordCallbackMock);
-			
-			id.setPasswordCallback(passwordCallbackMock);
-			
-			TokenProvider tp1 = new Saml1TokenProvider();
-			TokenProvider tp2 = new Saml2TokenProvider();
-			id.setTokenProviders(Arrays.asList(tp1, tp2));
-			
 			id.issue(requestMock);
-			verify(requestMock);
-			
 			fail("STSException should be thrown");
-			
 		} catch(STSException e) {
-			
 		}
+		verify(requestMock);
 	}
 	
 	@Test
@@ -252,6 +249,7 @@ public class IssueDelegateTest {
 		EasyMock.replay(requestMock);
 			
 		EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(null);
+		EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn("joespassword");
 		EasyMock.replay(passwordCallbackMock);
 			
 		TokenProvider tp1 = new Saml1TokenProvider();
@@ -260,12 +258,10 @@ public class IssueDelegateTest {
 		
 		id.setPasswordCallback(passwordCallbackMock);
 		
-		
 		try {
 			id.issue(requestMock);
 			fail("CertificateException should be thrown");
 		} catch(Exception e) {
-			
 		}
 			
 		verify(requestMock);

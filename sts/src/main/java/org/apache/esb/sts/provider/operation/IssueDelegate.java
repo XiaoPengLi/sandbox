@@ -37,6 +37,7 @@ import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import javax.xml.namespace.QName;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.esb.sts.provider.ProviderPasswordCallback;
 import org.apache.esb.sts.provider.STSException;
@@ -44,6 +45,7 @@ import org.apache.esb.sts.provider.cert.CertificateVerificationException;
 import org.apache.esb.sts.provider.cert.CertificateVerifier;
 import org.apache.esb.sts.provider.cert.CertificateVerifierConfig;
 import org.apache.esb.sts.provider.token.TokenProvider;
+import org.apache.xerces.dom.ElementNSImpl;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseCollectionType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
@@ -159,11 +161,12 @@ public class IssueDelegate implements IssueOperation {
 			elementToken = tokenProvider.createToken(username);
 		}
 
-		signSAML(elementToken);
+		String tokenId = tokenProvider.getTokenId(elementToken);
+		signSAML(elementToken, tokenId);
 
 		// prepare response
 		RequestSecurityTokenResponseType response = wrapAssertionToResponse(
-				tokenType, elementToken, tokenProvider.getTokenId(elementToken));
+				tokenType, elementToken, tokenId);
 
 		RequestSecurityTokenResponseCollectionType responseCollection = WS_TRUST_FACTORY
 				.createRequestSecurityTokenResponseCollectionType();
@@ -224,6 +227,11 @@ public class IssueDelegate implements IssueOperation {
 		JAXBElement<RequestedReferenceType> requestedAttachedReference = WS_TRUST_FACTORY
 				.createRequestedAttachedReference(requestedReferenceType);
 		response.getAny().add(requestedAttachedReference);
+		
+		// RequestedUnattachedReference
+		JAXBElement<RequestedReferenceType> requestedUnattachedReference = WS_TRUST_FACTORY
+			.createRequestedUnattachedReference(requestedReferenceType);
+		response.getAny().add(requestedUnattachedReference);
 
 		return response;
 	}
@@ -232,27 +240,20 @@ public class IssueDelegate implements IssueOperation {
 			throws CertificateException {
 		UseKeyType useKeyType = extractType(requestObject, UseKeyType.class);
 		if (null != useKeyType) {
-			KeyInfoType keyInfoType = extractType(useKeyType.getAny(),
-					KeyInfoType.class);
-			if (null != keyInfoType) {
-				for (Object keyInfoContent : keyInfoType.getContent()) {
-					X509DataType x509DataType = extractType(keyInfoContent,
-							X509DataType.class);
-					if (null != x509DataType) {
-						for (Object x509Object : x509DataType
-								.getX509IssuerSerialOrX509SKIOrX509SubjectName()) {
-							byte[] x509 = extractType(x509Object, byte[].class);
-							if (null != x509) {
-								CertificateFactory cf = CertificateFactory
-										.getInstance(X_509);
-								Certificate certificate = cf
-										.generateCertificate(new ByteArrayInputStream(
-												x509));
-								X509Certificate ret = (X509Certificate) certificate;
-								return ret;
-							}
-						}
-					}
+			ElementNSImpl elementNSImpl = (ElementNSImpl) useKeyType.getAny();
+			NodeList x509CertData = elementNSImpl
+					.getElementsByTagName("X509Certificate");
+			if (x509CertData != null && x509CertData.getLength() > 0) {
+				byte[] x509CertBytes = Base64.decodeBase64(x509CertData.item(0)
+						.getTextContent().getBytes());
+				if (x509CertBytes != null) {
+					CertificateFactory cf = CertificateFactory
+							.getInstance(X_509);
+					Certificate certificate = cf
+							.generateCertificate(new ByteArrayInputStream(
+									x509CertBytes));
+					X509Certificate x509Cert = (X509Certificate) certificate;
+					return x509Cert;
 				}
 			}
 		}
@@ -299,7 +300,7 @@ public class IssueDelegate implements IssueOperation {
 		} 
 	}
 
-	private void signSAML(Element assertionDocument) {
+	private void signSAML(Element assertionDocument, String tokenId) {
 
 		InputStream isKeyStore = this.getClass()
 				.getResourceAsStream(certificateVerifierConfig.getStorePath());
@@ -308,48 +309,40 @@ public class IssueDelegate implements IssueOperation {
 		KeyStoreInfo keyStoreInfo = new KeyStoreInfo(isKeyStore, certificateVerifierConfig.getStorePwd(),
 				certificateVerifierConfig.getKeySignAlias(), certificateVerifierConfig.getKeySignPwd());
 
-		signAssertion(assertionDocument, keyStoreInfo);
+		signXML(assertionDocument, tokenId, keyStoreInfo);
+
+//		shiftSignatureElementInSaml(assertion);
 	}
 
-	private void signAssertion(Element assertion, KeyStoreInfo keyStoreInfo) {
-
-		String id = assertion.getAttribute("ID");
-		String refId = (id != null) ? "#" + id : "";
-
-		signXML(assertion, refId, keyStoreInfo);
-
-		shiftSignatureElementInSaml(assertion);
-	}
-
-	private void shiftSignatureElementInSaml(Element target) {
-		NodeList nl = target.getElementsByTagNameNS(XMLSignature.XMLNS,
-				"Signature");
-		if (nl.getLength() == 0) {
-			return;
-		}
-		Element signatureElement = (Element) nl.item(0);
-
-		boolean foundIssuer = false;
-		Node elementAfterIssuer = null;
-		NodeList children = target.getChildNodes();
-		for (int i = 0; i < children.getLength(); i++) {
-			Node child = children.item(i);
-			if (foundIssuer) {
-				elementAfterIssuer = child;
-				break;
-			}
-			if (child.getNodeType() == Node.ELEMENT_NODE
-					&& child.getLocalName().equals("Issuer"))
-				foundIssuer = true;
-		}
-
-		// Place after the Issuer, or as first element if no Issuer:
-		if (!foundIssuer || elementAfterIssuer != null) {
-			target.removeChild(signatureElement);
-			target.insertBefore(signatureElement,
-					foundIssuer ? elementAfterIssuer : target.getFirstChild());
-		}
-	}
+//	private void shiftSignatureElementInSaml(Element target) {
+//		NodeList nl = target.getElementsByTagNameNS(XMLSignature.XMLNS,
+//				"Signature");
+//		if (nl.getLength() == 0) {
+//			return;
+//		}
+//		Element signatureElement = (Element) nl.item(0);
+//
+//		boolean foundIssuer = false;
+//		Node elementAfterIssuer = null;
+//		NodeList children = target.getChildNodes();
+//		for (int i = 0; i < children.getLength(); i++) {
+//			Node child = children.item(i);
+//			if (foundIssuer) {
+//				elementAfterIssuer = child;
+//				break;
+//			}
+//			if (child.getNodeType() == Node.ELEMENT_NODE
+//					&& child.getLocalName().equals("Issuer"))
+//				foundIssuer = true;
+//		}
+//
+//		// Place after the Issuer, or as first element if no Issuer:
+//		if (!foundIssuer || elementAfterIssuer != null) {
+//			target.removeChild(signatureElement);
+//			target.insertBefore(signatureElement,
+//					foundIssuer ? elementAfterIssuer : target.getFirstChild());
+//		}
+//	}
 
 	private void signXML(Element target, String refId, KeyStoreInfo keyStoreInfo) {
 
@@ -363,7 +356,7 @@ public class IssueDelegate implements IssueOperation {
 			Transform transform = signFactory.newTransform(
 					"http://www.w3.org/2000/09/xmldsig#enveloped-signature",
 					(TransformParameterSpec) null);
-			Reference ref = signFactory.newReference(refId, method,
+			Reference ref = signFactory.newReference('#' + refId, method,
 					Collections.singletonList(transform), null, null);
 
 			CanonicalizationMethod canonMethod = signFactory
