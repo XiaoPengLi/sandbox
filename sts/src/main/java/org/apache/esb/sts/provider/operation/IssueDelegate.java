@@ -236,6 +236,38 @@ public class IssueDelegate implements IssueOperation {
 		return response;
 	}
 
+  private X509Certificate getCertificateFromRequest(Object requestObject)
+			throws CertificateException {
+		UseKeyType useKeyType = extractType(requestObject, UseKeyType.class);
+		if (null != useKeyType) {
+			KeyInfoType keyInfoType = extractType(useKeyType.getAny(),
+					KeyInfoType.class);
+			if (null != keyInfoType) {
+				for (Object keyInfoContent : keyInfoType.getContent()) {
+					X509DataType x509DataType = extractType(keyInfoContent,
+							X509DataType.class);
+					if (null != x509DataType) {
+						for (Object x509Object : x509DataType
+								.getX509IssuerSerialOrX509SKIOrX509SubjectName()) {
+							byte[] x509 = extractType(x509Object, byte[].class);
+							if (null != x509) {
+								CertificateFactory cf = CertificateFactory
+										.getInstance(X_509);
+								Certificate certificate = cf
+										.generateCertificate(new ByteArrayInputStream(
+												x509));
+								X509Certificate ret = (X509Certificate) certificate;
+								return ret;
+							}
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+  /*
 	private X509Certificate getCertificateFromRequest(Object requestObject)
 			throws CertificateException {
 		UseKeyType useKeyType = extractType(requestObject, UseKeyType.class);
@@ -259,6 +291,7 @@ public class IssueDelegate implements IssueOperation {
 		}
 		return null;
 	}
+	*/
 
 	@SuppressWarnings("unchecked")
 	private static final <T> T extractType(Object param, Class<T> clazz) {
