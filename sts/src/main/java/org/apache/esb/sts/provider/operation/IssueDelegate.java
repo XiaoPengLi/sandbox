@@ -37,7 +37,6 @@ import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import javax.xml.namespace.QName;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.esb.sts.provider.ProviderPasswordCallback;
 import org.apache.esb.sts.provider.STSException;
@@ -45,7 +44,6 @@ import org.apache.esb.sts.provider.cert.CertificateVerificationException;
 import org.apache.esb.sts.provider.cert.CertificateVerifier;
 import org.apache.esb.sts.provider.cert.CertificateVerifierConfig;
 import org.apache.esb.sts.provider.token.TokenProvider;
-import org.apache.xerces.dom.ElementNSImpl;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseCollectionType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
