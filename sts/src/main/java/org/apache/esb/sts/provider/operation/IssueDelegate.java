@@ -86,8 +86,9 @@ public class IssueDelegate implements IssueOperation {
 	public void setTokenProviders(List<TokenProvider> tokenProviders) {
 		this.tokenProviders = tokenProviders;
 	}
-	
-	public void setCertificateVerifierConfig(CertificateVerifierConfig certificateVerifierConfig) {
+
+	public void setCertificateVerifierConfig(
+			CertificateVerifierConfig certificateVerifierConfig) {
 		this.certificateVerifierConfig = certificateVerifierConfig;
 	}
 
@@ -102,7 +103,8 @@ public class IssueDelegate implements IssueOperation {
 		for (Object requestObject : request.getAny()) {
 			// certificate
 			try {
-				certificate = getCertificateFromRequest(requestObject);
+				if (certificate == null)
+					certificate = getCertificateFromRequest(requestObject);
 			} catch (CertificateException e) {
 				throw new STSException(
 						"Can't extract X509 certificate from request", e);
@@ -127,12 +129,14 @@ public class IssueDelegate implements IssueOperation {
 				throw new STSException(
 						"Can't verify X509 certificate from request", e);
 			}
-		} else {
-			authenticate(username, passwordCallback.resetPassword());
 		}
 
 		if (username == null) {
 			throw new STSException("No credentials provided");
+		}
+		
+		if (certificate == null) {
+			authenticate(username, passwordCallback.resetPassword());	
 		}
 
 		if (tokenType == null) {
@@ -154,10 +158,10 @@ public class IssueDelegate implements IssueOperation {
 		}
 
 		Element elementToken = null;
-		
-		if(certificate != null){
+
+		if (certificate != null) {
 			elementToken = tokenProvider.createToken(certificate);
-		}else{
+		} else {
 			elementToken = tokenProvider.createToken(username);
 		}
 
@@ -176,7 +180,8 @@ public class IssueDelegate implements IssueOperation {
 
 	private void verifyCertificate(X509Certificate certificate)
 			throws KeyStoreException, NoSuchAlgorithmException,
-			CertificateException, FileNotFoundException, IOException, CertificateVerificationException {
+			CertificateException, FileNotFoundException, IOException,
+			CertificateVerificationException {
 		KeyStore ks = KeyStore.getInstance(JKS_INSTANCE);
 
 		ks.load(this.getClass().getResourceAsStream(
@@ -188,8 +193,7 @@ public class IssueDelegate implements IssueOperation {
 		Set<X509Certificate> trustedRootCerts = new HashSet<X509Certificate>();
 		trustedRootCerts.add((X509Certificate) stsCert);
 
-		CertificateVerifier.verifyCertificate(certificate,
-					trustedRootCerts);
+		CertificateVerifier.verifyCertificate(certificate, trustedRootCerts);
 	}
 
 	private RequestSecurityTokenResponseType wrapAssertionToResponse(
@@ -227,16 +231,16 @@ public class IssueDelegate implements IssueOperation {
 		JAXBElement<RequestedReferenceType> requestedAttachedReference = WS_TRUST_FACTORY
 				.createRequestedAttachedReference(requestedReferenceType);
 		response.getAny().add(requestedAttachedReference);
-		
+
 		// RequestedUnattachedReference
 		JAXBElement<RequestedReferenceType> requestedUnattachedReference = WS_TRUST_FACTORY
-			.createRequestedUnattachedReference(requestedReferenceType);
+				.createRequestedUnattachedReference(requestedReferenceType);
 		response.getAny().add(requestedUnattachedReference);
 
 		return response;
 	}
 
-  private X509Certificate getCertificateFromRequest(Object requestObject)
+	private X509Certificate getCertificateFromRequest(Object requestObject)
 			throws CertificateException {
 		UseKeyType useKeyType = extractType(requestObject, UseKeyType.class);
 		if (null != useKeyType) {
@@ -267,31 +271,21 @@ public class IssueDelegate implements IssueOperation {
 		return null;
 	}
 
-  /*
-	private X509Certificate getCertificateFromRequest(Object requestObject)
-			throws CertificateException {
-		UseKeyType useKeyType = extractType(requestObject, UseKeyType.class);
-		if (null != useKeyType) {
-			ElementNSImpl elementNSImpl = (ElementNSImpl) useKeyType.getAny();
-			NodeList x509CertData = elementNSImpl
-					.getElementsByTagName("ds:X509Certificate");
-			if (x509CertData != null && x509CertData.getLength() > 0) {
-				byte[] x509CertBytes = Base64.decodeBase64(x509CertData.item(0)
-						.getTextContent().getBytes());
-				if (x509CertBytes != null) {
-					CertificateFactory cf = CertificateFactory
-							.getInstance(X_509);
-					Certificate certificate = cf
-							.generateCertificate(new ByteArrayInputStream(
-									x509CertBytes));
-					X509Certificate x509Cert = (X509Certificate) certificate;
-					return x509Cert;
-				}
-			}
-		}
-		return null;
-	}
-	*/
+	/*
+	 * private X509Certificate getCertificateFromRequest(Object requestObject)
+	 * throws CertificateException { UseKeyType useKeyType =
+	 * extractType(requestObject, UseKeyType.class); if (null != useKeyType) {
+	 * ElementNSImpl elementNSImpl = (ElementNSImpl) useKeyType.getAny();
+	 * NodeList x509CertData = elementNSImpl
+	 * .getElementsByTagName("ds:X509Certificate"); if (x509CertData != null &&
+	 * x509CertData.getLength() > 0) { byte[] x509CertBytes =
+	 * Base64.decodeBase64(x509CertData.item(0) .getTextContent().getBytes());
+	 * if (x509CertBytes != null) { CertificateFactory cf = CertificateFactory
+	 * .getInstance(X_509); Certificate certificate = cf
+	 * .generateCertificate(new ByteArrayInputStream( x509CertBytes));
+	 * X509Certificate x509Cert = (X509Certificate) certificate; return
+	 * x509Cert; } } } return null; }
+	 */
 
 	@SuppressWarnings("unchecked")
 	private static final <T> T extractType(Object param, Class<T> clazz) {
@@ -303,20 +297,21 @@ public class IssueDelegate implements IssueOperation {
 		}
 		return null;
 	}
-	
+
 	private void authenticate(String username, String password) {
 		try {
-			Document document = DOMUtils.readXml(this.getClass().getResourceAsStream("/tomcat-users.xml"));
+			Document document = DOMUtils.readXml(this.getClass()
+					.getResourceAsStream("/tomcat-users.xml"));
 			NodeList users = document.getElementsByTagName("user");
 			for (int userIndex = 0; userIndex < users.getLength(); userIndex++) {
 				Node currentUser = users.item(userIndex);
-				Attr currentUsername = (Attr) currentUser
-						.getAttributes().getNamedItem("username");
-				Attr currentPassword = (Attr) currentUser
-						.getAttributes().getNamedItem("password");
-				
+				Attr currentUsername = (Attr) currentUser.getAttributes()
+						.getNamedItem("username");
+				Attr currentPassword = (Attr) currentUser.getAttributes()
+						.getNamedItem("password");
+
 				if (!username.equals(currentUsername.getTextContent())) {
-					if (userIndex == users.getLength()-1) {
+					if (userIndex == users.getLength() - 1) {
 						throw new STSException("Wrong username");
 					}
 					continue;
@@ -324,58 +319,60 @@ public class IssueDelegate implements IssueOperation {
 					if (!password.equals(currentPassword.getTextContent())) {
 						throw new STSException("Wrong password");
 					}
-					System.out.println("Authentication successful for " + username);
+					System.out.println("Authentication successful for "
+							+ username);
 					break;
 				}
 			}
 		} catch (Exception e) {
 			throw new STSException("Erorr during authentication", e);
-		} 
+		}
 	}
 
 	private void signSAML(Element assertionDocument, String tokenId) {
 
-		InputStream isKeyStore = this.getClass()
-				.getResourceAsStream(certificateVerifierConfig.getStorePath());
+		InputStream isKeyStore = this.getClass().getResourceAsStream(
+				certificateVerifierConfig.getStorePath());
 
-
-		KeyStoreInfo keyStoreInfo = new KeyStoreInfo(isKeyStore, certificateVerifierConfig.getStorePwd(),
-				certificateVerifierConfig.getKeySignAlias(), certificateVerifierConfig.getKeySignPwd());
+		KeyStoreInfo keyStoreInfo = new KeyStoreInfo(isKeyStore,
+				certificateVerifierConfig.getStorePwd(),
+				certificateVerifierConfig.getKeySignAlias(),
+				certificateVerifierConfig.getKeySignPwd());
 
 		signXML(assertionDocument, tokenId, keyStoreInfo);
 
-//		shiftSignatureElementInSaml(assertion);
+		// shiftSignatureElementInSaml(assertion);
 	}
 
-//	private void shiftSignatureElementInSaml(Element target) {
-//		NodeList nl = target.getElementsByTagNameNS(XMLSignature.XMLNS,
-//				"Signature");
-//		if (nl.getLength() == 0) {
-//			return;
-//		}
-//		Element signatureElement = (Element) nl.item(0);
-//
-//		boolean foundIssuer = false;
-//		Node elementAfterIssuer = null;
-//		NodeList children = target.getChildNodes();
-//		for (int i = 0; i < children.getLength(); i++) {
-//			Node child = children.item(i);
-//			if (foundIssuer) {
-//				elementAfterIssuer = child;
-//				break;
-//			}
-//			if (child.getNodeType() == Node.ELEMENT_NODE
-//					&& child.getLocalName().equals("Issuer"))
-//				foundIssuer = true;
-//		}
-//
-//		// Place after the Issuer, or as first element if no Issuer:
-//		if (!foundIssuer || elementAfterIssuer != null) {
-//			target.removeChild(signatureElement);
-//			target.insertBefore(signatureElement,
-//					foundIssuer ? elementAfterIssuer : target.getFirstChild());
-//		}
-//	}
+	// private void shiftSignatureElementInSaml(Element target) {
+	// NodeList nl = target.getElementsByTagNameNS(XMLSignature.XMLNS,
+	// "Signature");
+	// if (nl.getLength() == 0) {
+	// return;
+	// }
+	// Element signatureElement = (Element) nl.item(0);
+	//
+	// boolean foundIssuer = false;
+	// Node elementAfterIssuer = null;
+	// NodeList children = target.getChildNodes();
+	// for (int i = 0; i < children.getLength(); i++) {
+	// Node child = children.item(i);
+	// if (foundIssuer) {
+	// elementAfterIssuer = child;
+	// break;
+	// }
+	// if (child.getNodeType() == Node.ELEMENT_NODE
+	// && child.getLocalName().equals("Issuer"))
+	// foundIssuer = true;
+	// }
+	//
+	// // Place after the Issuer, or as first element if no Issuer:
+	// if (!foundIssuer || elementAfterIssuer != null) {
+	// target.removeChild(signatureElement);
+	// target.insertBefore(signatureElement,
+	// foundIssuer ? elementAfterIssuer : target.getFirstChild());
+	// }
+	// }
 
 	private void signXML(Element target, String refId, KeyStoreInfo keyStoreInfo) {
 
@@ -418,7 +415,8 @@ public class IssueDelegate implements IssueOperation {
 			signature.sign(dsc);
 
 		} catch (Exception e) {
-			throw new STSException("Cannot sign xml document: " + e.getMessage(), e);
+			throw new STSException("Cannot sign xml document: "
+					+ e.getMessage(), e);
 		}
 	}
 
