@@ -94,8 +94,9 @@ public class IssueDelegate implements IssueOperation {
 	public RequestSecurityTokenResponseCollectionType issue(
 			RequestSecurityTokenType request) {
 
-		String tokenType = null;
+		String tokenType = SAMLConstants.SAML20_NS;
 		X509Certificate certificate = null;
+		String username = null;
 
 		// parse input arguments
 		for (Object requestObject : request.getAny()) {
@@ -118,27 +119,19 @@ public class IssueDelegate implements IssueOperation {
 		}
 
 		// check input arguments
-		String username = passwordCallback.resetUsername();
-		if (certificate != null) {
+		if (certificate != null) { // certificate
 			try {
 				verifyCertificate(certificate);
-				username = certificate.getSubjectX500Principal().getName();
 			} catch (Exception e) {
 				throw new STSException(
 						"Can't verify X509 certificate from request", e);
 			}
-		}
-
-		if (username == null) {
-			throw new STSException("No credentials provided");
-		}
-		
-		if (certificate == null) {
+		} else { // username
+			username = passwordCallback.resetUsername();
+			if (username == null) {
+				throw new STSException("No credentials provided");
+			}
 			authenticate(username, passwordCallback.resetPassword());	
-		}
-
-		if (tokenType == null) {
-			tokenType = SAMLConstants.SAML20_NS;
 		}
 
 		// create token
