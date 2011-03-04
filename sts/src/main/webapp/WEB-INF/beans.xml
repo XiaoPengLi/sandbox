@@ -12,7 +12,7 @@ http://www.springframework.org/schema/util http://www.springframework.org/schema
 	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
 
 	<bean id="securityTokenServiceProviderBean"
-		class="org.apache.esb.sts.provider.SecurityTokenServiceImpl">
+		class="org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceImpl">
 		<property name="cancelOperation" ref="cancelDelegate"/>
 		<property name="issueOperation" ref="issueDelegate"/>
 		<property name="keyExchangeTokenOperation" ref="keyExchangeTokenDelegate"/>
@@ -23,21 +23,21 @@ http://www.springframework.org/schema/util http://www.springframework.org/schema
 	</bean>	
 		
 	<bean id="cancelDelegate"
-		class="org.apache.esb.sts.provider.operation.CancelDelegate"/>
+		class="org.apache.cxf.ws.security.sts.provider.operation.CancelDelegate"/>
 	<bean id="issueDelegate"
-		class="org.apache.esb.sts.provider.operation.IssueDelegate">
+		class="org.apache.cxf.ws.security.sts.provider.operation.IssueDelegate">
 		<property name="passwordCallback" ref="passwordCallback"/>
 		<property name="tokenProviders" ref="tokenProviders"/>
 		<property name="certificateVerifierConfig" ref="certificateVerifierConfig"/>
 	</bean>
 	<bean id="keyExchangeTokenDelegate"
-		class="org.apache.esb.sts.provider.operation.KeyExchangeTokenDelegate"/>
+		class="org.apache.cxf.ws.security.sts.provider.operation.KeyExchangeTokenDelegate"/>
 	<bean id="renewDelegate"
-		class="org.apache.esb.sts.provider.operation.RenewDelegate"/>
+		class="org.apache.cxf.ws.security.sts.provider.operation.RenewDelegate"/>
 	<bean id="requestCollectionDelegate"
-		class="org.apache.esb.sts.provider.operation.RequestCollectionDelegate"/>
+		class="org.apache.cxf.ws.security.sts.provider.operation.RequestCollectionDelegate"/>
 	<bean id="validateDelegate"
-		class="org.apache.esb.sts.provider.operation.ValidateDelegate"/>
+		class="org.apache.cxf.ws.security.sts.provider.operation.ValidateDelegate"/>
 
 	<jaxws:endpoint id="SecurityTokenService"
 		implementor="#securityTokenServiceProviderBean"
@@ -61,7 +61,7 @@ http://www.springframework.org/schema/util http://www.springframework.org/schema
 	</jaxws:endpoint>
 
 	<bean id="passwordCallback"
-		class="org.apache.esb.sts.provider.ProviderPasswordCallback"/>
+		class="org.apache.cxf.ws.security.sts.provider.ProviderPasswordCallback"/>
 
 	<util:list id="tokenProviders">
 		<ref bean="saml1TokenProvider"/>
@@ -69,11 +69,11 @@ http://www.springframework.org/schema/util http://www.springframework.org/schema
 	</util:list>
 	
 	<bean id="saml1TokenProvider"
-		class="org.apache.esb.sts.provider.token.Saml1TokenProvider"/>
+		class="org.apache.cxf.ws.security.sts.provider.token.Saml1TokenProvider"/>
 	<bean id="saml2TokenProvider"
-		class="org.apache.esb.sts.provider.token.Saml2TokenProvider"/>
+		class="org.apache.cxf.ws.security.sts.provider.token.Saml2TokenProvider"/>
 	<bean id="certificateVerifierConfig"
-		class="org.apache.esb.sts.provider.cert.CertificateVerifierConfig">
+		class="org.apache.cxf.ws.security.sts.provider.cert.CertificateVerifierConfig">
 		<property name="storePath" value="/sts.jks"/>
 		<property name="storePwd" value="atleast8"/>
 		<property name="keyCertAlias" value="cacert"/>
