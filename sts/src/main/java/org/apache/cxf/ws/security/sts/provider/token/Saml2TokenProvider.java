@@ -1,3 +1,22 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package org.apache.cxf.ws.security.sts.provider.token;
 
 import java.security.NoSuchAlgorithmException;
@@ -36,133 +55,135 @@ import org.w3c.dom.Element;
 
 public class Saml2TokenProvider implements TokenProvider {
 
-	private static final String SAML_AUTH_CONTEXT = "ac:classes:X509";
+    private static final String SAML_AUTH_CONTEXT = "ac:classes:X509";
 
-	@Override
-	public String getTokenType() {
-		return SAMLConstants.SAML20_NS;
-	}
+    @Override
+    public String getTokenType() {
+        return SAMLConstants.SAML20_NS;
+    }
 
-	@Override
-	public Element createToken(X509Certificate certificate) {
-		try {
-			Subject subject = createSubject(certificate);
-			Assertion samlAssertion = createAuthnAssertion(subject);
-			return SamlUtils.toDom(samlAssertion).getDocumentElement();
-		} catch (Exception e) {
-			throw new TokenException("Can't serialize SAML assertion", e);
-		}
-	}
-	
-	@Override
-	public Element createToken(String username) {
-		Subject subject = createSubject(username);
-		Assertion samlAssertion = createAuthnAssertion(subject);
+    @Override
+    public Element createToken(X509Certificate certificate) {
+        try {
+            Subject subject = createSubject(certificate);
+            Assertion samlAssertion = createAuthnAssertion(subject);
+            return SamlUtils.toDom(samlAssertion).getDocumentElement();
+        } catch (Exception e) {
+            throw new TokenException("Can't serialize SAML assertion", e);
+        }
+    }
 
-		try {
-			return SamlUtils.toDom(samlAssertion).getDocumentElement();
-		} catch (Exception e) {
-			throw new TokenException("Can't serialize SAML assertion", e);
-		}
-	}
+    @Override
+    public Element createToken(String username) {
+        Subject subject = createSubject(username);
+        Assertion samlAssertion = createAuthnAssertion(subject);
 
-	@Override
-	public String getTokenId(Element token) {
-		return token.getAttribute(Assertion.ID_ATTRIB_NAME);
-	}
+        try {
+            return SamlUtils.toDom(samlAssertion).getDocumentElement();
+        } catch (Exception e) {
+            throw new TokenException("Can't serialize SAML assertion", e);
+        }
+    }
 
-	private Subject createSubject(String username) {
-		NameID nameID = (new NameIDBuilder()).buildObject();
-		nameID.setValue(username);
-		String format = "urn:oasis:names:tc:SAML:1.1:nameid-format:transient";
-		if (format != null) {
-			nameID.setFormat(format);
-		}
+    @Override
+    public String getTokenId(Element token) {
+        return token.getAttribute(Assertion.ID_ATTRIB_NAME);
+    }
 
-		Subject subject = (new SubjectBuilder()).buildObject();
-		subject.setNameID(nameID);
+    private Subject createSubject(String username) {
+        NameID nameID = (new NameIDBuilder()).buildObject();
+        nameID.setValue(username);
+        String format = "urn:oasis:names:tc:SAML:1.1:nameid-format:transient";
+        if (format != null) {
+            nameID.setFormat(format);
+        }
 
-		SubjectConfirmation confirmation = (new SubjectConfirmationBuilder())
-					.buildObject();
-		confirmation.setMethod(SubjectConfirmation.METHOD_BEARER);
-		subject.getSubjectConfirmations().add(confirmation);
-		return subject;
-	}
+        Subject subject = (new SubjectBuilder()).buildObject();
+        subject.setNameID(nameID);
 
-	private Subject createSubject(X509Certificate certificate) throws Exception{
-		DefaultBootstrap.bootstrap();
-		NameID nameID = (new NameIDBuilder()).buildObject();
-		nameID.setValue(certificate.getSubjectDN().getName());
-		String format = "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
-		if (format != null) {
-			nameID.setFormat(format);
-		}
-		Subject subject = (new SubjectBuilder()).buildObject();
-		subject.setNameID(nameID);
-		SubjectConfirmation confirmation = (new SubjectConfirmationBuilder())
-					.buildObject();
-		confirmation.setMethod(SubjectConfirmation.METHOD_HOLDER_OF_KEY);
-		KeyInfoConfirmationDataType keyInfoDataType = new KeyInfoConfirmationDataTypeBuilder().buildObject();
-		BasicX509Credential keyInfoCredential = new BasicX509Credential();
-		keyInfoCredential.setEntityCertificate(certificate);
-		keyInfoCredential.setPublicKey(certificate.getPublicKey());
-		BasicKeyInfoGeneratorFactory kiFactory = new BasicKeyInfoGeneratorFactory();
-		kiFactory.setEmitPublicKeyValue(true);
-		KeyInfo keyInfo = kiFactory.newInstance().generate(keyInfoCredential);
-		keyInfoDataType.getKeyInfos().add(keyInfo);	
-		subject.getSubjectConfirmations().add(confirmation);
-		subject.getSubjectConfirmations().get(0).setSubjectConfirmationData(keyInfoDataType);
-		return subject;
-	}
-	
-	private Assertion createAuthnAssertion(Subject subject) {
-		Assertion assertion = createAssertion(subject);
+        SubjectConfirmation confirmation = (new SubjectConfirmationBuilder())
+                .buildObject();
+        confirmation.setMethod(SubjectConfirmation.METHOD_BEARER);
+        subject.getSubjectConfirmations().add(confirmation);
+        return subject;
+    }
 
-		AuthnContextClassRef ref = (new AuthnContextClassRefBuilder())
-				.buildObject();
-		String authnCtx = SAML_AUTH_CONTEXT;
-		if (authnCtx != null) {
-			ref.setAuthnContextClassRef(authnCtx);
-		}
-		AuthnContext authnContext = (new AuthnContextBuilder()).buildObject();
-		authnContext.setAuthnContextClassRef(ref);
+    private Subject createSubject(X509Certificate certificate) throws Exception {
+        DefaultBootstrap.bootstrap();
+        NameID nameID = (new NameIDBuilder()).buildObject();
+        nameID.setValue(certificate.getSubjectDN().getName());
+        String format = "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName";
+        if (format != null) {
+            nameID.setFormat(format);
+        }
+        Subject subject = (new SubjectBuilder()).buildObject();
+        subject.setNameID(nameID);
+        SubjectConfirmation confirmation = (new SubjectConfirmationBuilder())
+                .buildObject();
+        confirmation.setMethod(SubjectConfirmation.METHOD_HOLDER_OF_KEY);
+        KeyInfoConfirmationDataType keyInfoDataType = new KeyInfoConfirmationDataTypeBuilder()
+                .buildObject();
+        BasicX509Credential keyInfoCredential = new BasicX509Credential();
+        keyInfoCredential.setEntityCertificate(certificate);
+        keyInfoCredential.setPublicKey(certificate.getPublicKey());
+        BasicKeyInfoGeneratorFactory kiFactory = new BasicKeyInfoGeneratorFactory();
+        kiFactory.setEmitPublicKeyValue(true);
+        KeyInfo keyInfo = kiFactory.newInstance().generate(keyInfoCredential);
+        keyInfoDataType.getKeyInfos().add(keyInfo);
+        subject.getSubjectConfirmations().add(confirmation);
+        subject.getSubjectConfirmations().get(0)
+                .setSubjectConfirmationData(keyInfoDataType);
+        return subject;
+    }
 
-		AuthnStatement authnStatement = (new AuthnStatementBuilder())
-				.buildObject();
-		authnStatement.setAuthnInstant(new DateTime());
-		authnStatement.setAuthnContext(authnContext);
+    private Assertion createAuthnAssertion(Subject subject) {
+        Assertion assertion = createAssertion(subject);
 
-		assertion.getStatements().add(authnStatement);
+        AuthnContextClassRef ref = (new AuthnContextClassRefBuilder())
+                .buildObject();
+        String authnCtx = SAML_AUTH_CONTEXT;
+        if (authnCtx != null) {
+            ref.setAuthnContextClassRef(authnCtx);
+        }
+        AuthnContext authnContext = (new AuthnContextBuilder()).buildObject();
+        authnContext.setAuthnContextClassRef(ref);
 
-		return assertion;
-	}
+        AuthnStatement authnStatement = (new AuthnStatementBuilder())
+                .buildObject();
+        authnStatement.setAuthnInstant(new DateTime());
+        authnStatement.setAuthnContext(authnContext);
 
-	private Assertion createAssertion(Subject subject) {
-		Assertion assertion = (new AssertionBuilder()).buildObject();
-		try {
-			SecureRandomIdentifierGenerator generator = new SecureRandomIdentifierGenerator();
-			assertion.setID(generator.generateIdentifier());
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
+        assertion.getStatements().add(authnStatement);
 
-		DateTime now = new DateTime();
-		assertion.setIssueInstant(now);
+        return assertion;
+    }
 
-		String issuerURL = "http://www.sopera.de/SAML2";
-		if (issuerURL != null) {
-			Issuer issuer = (new IssuerBuilder()).buildObject();
-			issuer.setValue(issuerURL);
-			assertion.setIssuer(issuer);
-		}
+    private Assertion createAssertion(Subject subject) {
+        Assertion assertion = (new AssertionBuilder()).buildObject();
+        try {
+            SecureRandomIdentifierGenerator generator = new SecureRandomIdentifierGenerator();
+            assertion.setID(generator.generateIdentifier());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
 
-		assertion.setSubject(subject);
+        DateTime now = new DateTime();
+        assertion.setIssueInstant(now);
 
-		Conditions conditions = (new ConditionsBuilder()).buildObject();
-		conditions.setNotBefore(now.minusMillis(3600000));
-		conditions.setNotOnOrAfter(now.plusMillis(3600000));
-		assertion.setConditions(conditions);
-		return assertion;
-	}
+        String issuerURL = "http://www.sopera.de/SAML2";
+        if (issuerURL != null) {
+            Issuer issuer = (new IssuerBuilder()).buildObject();
+            issuer.setValue(issuerURL);
+            assertion.setIssuer(issuer);
+        }
+
+        assertion.setSubject(subject);
+
+        Conditions conditions = (new ConditionsBuilder()).buildObject();
+        conditions.setNotBefore(now.minusMillis(3600000));
+        conditions.setNotOnOrAfter(now.plusMillis(3600000));
+        assertion.setConditions(conditions);
+        return assertion;
+    }
 
 }
