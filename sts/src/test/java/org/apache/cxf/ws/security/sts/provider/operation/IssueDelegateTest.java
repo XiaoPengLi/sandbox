@@ -20,6 +20,8 @@
 package org.apache.cxf.ws.security.sts.provider.operation;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.spring.SpringBusFactory;
@@ -76,6 +78,9 @@ import org.xml.sax.SAXException;
 
 public class IssueDelegateTest {
 
+	private static final Log LOG = LogFactory
+    .getLog(IssueDelegateTest.class.getName());
+	
     RequestSecurityTokenType requestMock = createMock(RequestSecurityTokenType.class);
 
     ProviderPasswordCallback passwordCallbackMock = createMock(ProviderPasswordCallback.class);
@@ -627,7 +632,7 @@ public class IssueDelegateTest {
                     .generateCertificate(new ByteArrayInputStream(Base64
                             .decodeBase64(CERT_DATA.getBytes())));
         } catch (CertificateException e) {
-            e.printStackTrace();
+            LOG.error(e);
         }
         JAXBElement<X509Certificate> jX509Certificate = new JAXBElement<X509Certificate>(
                 QName.valueOf("X509Certificate"), X509Certificate.class,

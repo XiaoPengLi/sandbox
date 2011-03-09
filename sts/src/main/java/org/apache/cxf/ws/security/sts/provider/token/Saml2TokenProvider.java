@@ -22,6 +22,8 @@ package org.apache.cxf.ws.security.sts.provider.token;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
@@ -56,6 +58,9 @@ import org.w3c.dom.Element;
 public class Saml2TokenProvider implements TokenProvider {
 
     private static final String SAML_AUTH_CONTEXT = "ac:classes:X509";
+    
+    private static final Log LOG = LogFactory
+    .getLog(Saml2TokenProvider.class.getName());
 
     @Override
     public String getTokenType() {
@@ -164,7 +169,7 @@ public class Saml2TokenProvider implements TokenProvider {
             SecureRandomIdentifierGenerator generator = new SecureRandomIdentifierGenerator();
             assertion.setID(generator.generateIdentifier());
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            LOG.error(e);
         }
 
         DateTime now = new DateTime();

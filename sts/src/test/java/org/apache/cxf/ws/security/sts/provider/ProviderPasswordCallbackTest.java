@@ -33,11 +33,16 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.cxf.ws.security.sts.provider.ProviderPasswordCallback;
 import org.apache.ws.security.WSPasswordCallback;
 
 public class ProviderPasswordCallbackTest {
 
+	private static final Log LOG = LogFactory
+    .getLog(ProviderPasswordCallbackTest.class.getName());
+	
     WSPasswordCallback callback = new WSPasswordCallback("", "", "",
             WSPasswordCallback.USERNAME_TOKEN_UNKNOWN);
 
@@ -48,14 +53,9 @@ public class ProviderPasswordCallbackTest {
             ProviderPasswordCallback ppc = new ProviderPasswordCallback();
             ppc.handle(null);
             fail("NullPointerException should be thrown");
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (UnsupportedCallbackException e) {
-            // TODO Auto-generated catch block
-        } catch (NullPointerException e) {
-            // TODO Auto-generated catch block
-        }
+        } catch (Exception e) {
+           LOG.error(e);
+        } 
     }
 
     @Test
@@ -67,14 +67,9 @@ public class ProviderPasswordCallbackTest {
             c[0] = createMock(WSPasswordCallback.class);
             ppc.handle(c);
             fail("UnsupportedCallbackException should be thrown");
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (UnsupportedCallbackException e) {
-            // TODO Auto-generated catch block
-        } catch (NullPointerException e) {
-            // TODO Auto-generated catch block
-        }
+        } catch (Exception e) {
+        	LOG.error(e);
+        } 
     }
 
     @Test
@@ -85,13 +80,8 @@ public class ProviderPasswordCallbackTest {
             c[0] = new WSPasswordCallback("test", "", "",
                     WSPasswordCallback.USERNAME_TOKEN_UNKNOWN);
             ppc.handle(c);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (UnsupportedCallbackException e) {
-            // TODO Auto-generated catch block
-        } catch (NullPointerException e) {
-            // TODO Auto-generated catch block
+        } catch (Exception e) {
+        	LOG.error(e);
         }
     }
 
