@@ -19,68 +19,38 @@
 
 package org.apache.cxf.ws.security.sts.provider.operation;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.cxf.Bus;
-import org.apache.cxf.BusFactory;
-import org.apache.cxf.bus.spring.SpringBusFactory;
-import org.apache.cxf.common.security.TokenType;
-import org.apache.cxf.ws.security.sts.provider.ProviderPasswordCallback;
-import org.apache.cxf.ws.security.sts.provider.STSException;
-import org.apache.cxf.ws.security.sts.provider.cert.CertificateVerifierConfig;
-import org.apache.cxf.ws.security.sts.provider.operation.IssueDelegate;
-import org.apache.cxf.ws.security.sts.provider.token.Saml1TokenProvider;
-import org.apache.cxf.ws.security.sts.provider.token.Saml2TokenProvider;
-import org.apache.cxf.ws.security.sts.provider.token.TokenProvider;
-import org.apache.cxf.ws.security.trust.STSClient;
-import org.apache.ws.security.components.crypto.Crypto;
-import org.apache.xerces.dom.CoreDocumentImpl;
-import org.apache.xerces.dom.DocumentTypeImpl;
-import org.apache.xerces.dom.ElementNSImpl;
-import org.apache.xml.security.keys.KeyInfo;
-import org.easymock.EasyMock;
-
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.StringReader;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
-import javax.security.auth.callback.PasswordCallback;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
-import junit.framework.TestCase;
-
-import org.junit.Ignore;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.cxf.ws.security.sts.provider.ProviderPasswordCallback;
+import org.apache.cxf.ws.security.sts.provider.STSException;
+import org.apache.cxf.ws.security.sts.provider.cert.CertificateVerifierConfig;
+import org.apache.cxf.ws.security.sts.provider.token.Saml1TokenProvider;
+import org.apache.cxf.ws.security.sts.provider.token.Saml2TokenProvider;
+import org.apache.cxf.ws.security.sts.provider.token.TokenProvider;
+import org.easymock.EasyMock;
 import org.junit.Test;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.UseKeyType;
 import org.w3._2000._09.xmldsig.KeyInfoType;
 import org.w3._2000._09.xmldsig.X509DataType;
-import org.w3c.dom.Document;
-import org.w3c.dom.DocumentType;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 public class IssueDelegateTest {
 
-	private static final Log LOG = LogFactory
-    .getLog(IssueDelegateTest.class.getName());
-	
     RequestSecurityTokenType requestMock = createMock(RequestSecurityTokenType.class);
 
     ProviderPasswordCallback passwordCallbackMock = createMock(ProviderPasswordCallback.class);
@@ -99,16 +69,15 @@ public class IssueDelegateTest {
 
     @Test
     public void TestIssueDelegateNullParameter() {
-        try {
-            IssueDelegate id = new IssueDelegate();
-            assertNotNull(id);
-            ProviderPasswordCallback passwordCallback = new ProviderPasswordCallback();
-            id.setPasswordCallback(passwordCallback);
+        IssueDelegate id = new IssueDelegate();
+        ProviderPasswordCallback passwordCallback = new ProviderPasswordCallback();
+        id.setPasswordCallback(passwordCallback);
 
+        try {
             id.issue(null);
             fail("NullPointerException should be thrown");
         } catch (NullPointerException e) {
-
+        	// expected
         }
     }
 
@@ -151,173 +120,175 @@ public class IssueDelegateTest {
 
     @Test
     public void TestIssueDelegateWrongUsername() {
+        IssueDelegate id = new IssueDelegate();
+        CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
+        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setKeySignAlias(keySignAlias);
+        certificateVerifierConfig.setKeySignPwd(keySignPwd);
+        certificateVerifierConfig.setStorePath(storePath);
+        certificateVerifierConfig.setStorePwd(storePwd);
+        id.setCertificateVerifierConfig(certificateVerifierConfig);
+
+        EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
+                "joexxx");
+        EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn(
+                "joespassword");
+        EasyMock.replay(passwordCallbackMock);
+
+        id.setPasswordCallback(passwordCallbackMock);
+
+        JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
+                "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
+                "TokenType"), String.class,
+                "urn:oasis:names:tc:SAML:1.0:assertion");
+
+        EasyMock.expect(requestMock.getAny()).andStubReturn(
+                Arrays.asList((Object) tokenType));
+
+        EasyMock.replay(requestMock);
+
+        TokenProvider tp1 = new Saml1TokenProvider();
+        TokenProvider tp2 = new Saml2TokenProvider();
+        id.setTokenProviders(Arrays.asList(tp1, tp2));
+
         try {
-            IssueDelegate id = new IssueDelegate();
-            CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-            certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
-            certificateVerifierConfig.setKeySignAlias(keySignAlias);
-            certificateVerifierConfig.setKeySignPwd(keySignPwd);
-            certificateVerifierConfig.setStorePath(storePath);
-            certificateVerifierConfig.setStorePwd(storePwd);
-            id.setCertificateVerifierConfig(certificateVerifierConfig);
-
-            EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
-                    "joexxx");
-            EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn(
-                    "joespassword");
-            EasyMock.replay(passwordCallbackMock);
-
-            id.setPasswordCallback(passwordCallbackMock);
-
-            JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
-                    "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-                    "TokenType"), String.class,
-                    "urn:oasis:names:tc:SAML:1.0:assertion");
-
-            EasyMock.expect(requestMock.getAny()).andStubReturn(
-                    Arrays.asList((Object) tokenType));
-
-            EasyMock.replay(requestMock);
-
-            TokenProvider tp1 = new Saml1TokenProvider();
-            TokenProvider tp2 = new Saml2TokenProvider();
-            id.setTokenProviders(Arrays.asList(tp1, tp2));
-
             id.issue(requestMock);
-
-            verify(requestMock);
             fail("STSException should be thrown");
         } catch (STSException e) {
-
+        	// expected
+        } finally {
+            verify(requestMock);
         }
     }
 
     @Test
     public void TestIssueDelegateWrongPassword() {
+        IssueDelegate id = new IssueDelegate();
+        CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
+        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setKeySignAlias(keySignAlias);
+        certificateVerifierConfig.setKeySignPwd(keySignPwd);
+        certificateVerifierConfig.setStorePath(storePath);
+        certificateVerifierConfig.setStorePwd(storePwd);
+        id.setCertificateVerifierConfig(certificateVerifierConfig);
+
+        EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
+                "joe");
+        EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn(
+                "joespasswordxxx");
+        EasyMock.replay(passwordCallbackMock);
+
+        id.setPasswordCallback(passwordCallbackMock);
+
+        JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
+                "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
+                "TokenType"), String.class,
+                "urn:oasis:names:tc:SAML:1.0:assertion");
+
+        EasyMock.expect(requestMock.getAny()).andStubReturn(
+                Arrays.asList((Object) tokenType));
+
+        EasyMock.replay(requestMock);
+
+        TokenProvider tp1 = new Saml1TokenProvider();
+        TokenProvider tp2 = new Saml2TokenProvider();
+        id.setTokenProviders(Arrays.asList(tp1, tp2));
+
         try {
-            IssueDelegate id = new IssueDelegate();
-            CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-            certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
-            certificateVerifierConfig.setKeySignAlias(keySignAlias);
-            certificateVerifierConfig.setKeySignPwd(keySignPwd);
-            certificateVerifierConfig.setStorePath(storePath);
-            certificateVerifierConfig.setStorePwd(storePwd);
-            id.setCertificateVerifierConfig(certificateVerifierConfig);
-
-            EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
-                    "joe");
-            EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn(
-                    "joespasswordxxx");
-            EasyMock.replay(passwordCallbackMock);
-
-            id.setPasswordCallback(passwordCallbackMock);
-
-            JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
-                    "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-                    "TokenType"), String.class,
-                    "urn:oasis:names:tc:SAML:1.0:assertion");
-
-            EasyMock.expect(requestMock.getAny()).andStubReturn(
-                    Arrays.asList((Object) tokenType));
-
-            EasyMock.replay(requestMock);
-
-            TokenProvider tp1 = new Saml1TokenProvider();
-            TokenProvider tp2 = new Saml2TokenProvider();
-            id.setTokenProviders(Arrays.asList(tp1, tp2));
-
             id.issue(requestMock);
 
-            verify(requestMock);
             fail("STSException should be thrown");
         } catch (STSException e) {
-
+        	// expected 
+        } finally {
+            verify(requestMock);
         }
     }
 
     @Test
     public void TestIssueDelegateWrongSignKey() {
+        IssueDelegate id = new IssueDelegate();
+        CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
+        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setKeySignAlias(keySignAlias);
+        certificateVerifierConfig.setKeySignPwd("xxx");
+        certificateVerifierConfig.setStorePath(storePath);
+        certificateVerifierConfig.setStorePwd(storePwd);
+        id.setCertificateVerifierConfig(certificateVerifierConfig);
+
+        EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
+                "joe");
+        EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn(
+                "joespassword");
+        EasyMock.replay(passwordCallbackMock);
+
+        id.setPasswordCallback(passwordCallbackMock);
+
+        JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
+                "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
+                "TokenType"), String.class,
+                "urn:oasis:names:tc:SAML:1.0:assertion");
+
+        EasyMock.expect(requestMock.getAny()).andStubReturn(
+                Arrays.asList((Object) tokenType));
+
+        EasyMock.replay(requestMock);
+
+        TokenProvider tp1 = new Saml1TokenProvider();
+        TokenProvider tp2 = new Saml2TokenProvider();
+        id.setTokenProviders(Arrays.asList(tp1, tp2));
+
         try {
-            IssueDelegate id = new IssueDelegate();
-            CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-            certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
-            certificateVerifierConfig.setKeySignAlias(keySignAlias);
-            certificateVerifierConfig.setKeySignPwd("xxx");
-            certificateVerifierConfig.setStorePath(storePath);
-            certificateVerifierConfig.setStorePwd(storePwd);
-            id.setCertificateVerifierConfig(certificateVerifierConfig);
-
-            EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
-                    "joe");
-            EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn(
-                    "joespassword");
-            EasyMock.replay(passwordCallbackMock);
-
-            id.setPasswordCallback(passwordCallbackMock);
-
-            JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
-                    "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-                    "TokenType"), String.class,
-                    "urn:oasis:names:tc:SAML:1.0:assertion");
-
-            EasyMock.expect(requestMock.getAny()).andStubReturn(
-                    Arrays.asList((Object) tokenType));
-
-            EasyMock.replay(requestMock);
-
-            TokenProvider tp1 = new Saml1TokenProvider();
-            TokenProvider tp2 = new Saml2TokenProvider();
-            id.setTokenProviders(Arrays.asList(tp1, tp2));
-
             id.issue(requestMock);
-
-            verify(requestMock);
             fail("STSException should be thrown");
-        } catch (Exception e) {
-
+        } catch (STSException e) {
+        	// expected 
+        } finally {
+            verify(requestMock);
         }
     }
 
     @Test
     public void TestIssueDelegateWrongSignAlias() {
+        IssueDelegate id = new IssueDelegate();
+        CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
+        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setKeySignAlias("xxx");
+        certificateVerifierConfig.setKeySignPwd(keySignPwd);
+        certificateVerifierConfig.setStorePath(storePath);
+        certificateVerifierConfig.setStorePwd(storePwd);
+        id.setCertificateVerifierConfig(certificateVerifierConfig);
+
+        EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
+                "joe");
+        EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn(
+                "joespassword");
+        EasyMock.replay(passwordCallbackMock);
+
+        id.setPasswordCallback(passwordCallbackMock);
+
+        JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
+                "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
+                "TokenType"), String.class,
+                "urn:oasis:names:tc:SAML:1.0:assertion");
+
+        EasyMock.expect(requestMock.getAny()).andStubReturn(
+                Arrays.asList((Object) tokenType));
+
+        EasyMock.replay(requestMock);
+
+        TokenProvider tp1 = new Saml1TokenProvider();
+        TokenProvider tp2 = new Saml2TokenProvider();
+        id.setTokenProviders(Arrays.asList(tp1, tp2));
+
         try {
-            IssueDelegate id = new IssueDelegate();
-            CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-            certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
-            certificateVerifierConfig.setKeySignAlias("xxx");
-            certificateVerifierConfig.setKeySignPwd(keySignPwd);
-            certificateVerifierConfig.setStorePath(storePath);
-            certificateVerifierConfig.setStorePwd(storePwd);
-            id.setCertificateVerifierConfig(certificateVerifierConfig);
-
-            EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
-                    "joe");
-            EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn(
-                    "joespassword");
-            EasyMock.replay(passwordCallbackMock);
-
-            id.setPasswordCallback(passwordCallbackMock);
-
-            JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
-                    "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-                    "TokenType"), String.class,
-                    "urn:oasis:names:tc:SAML:1.0:assertion");
-
-            EasyMock.expect(requestMock.getAny()).andStubReturn(
-                    Arrays.asList((Object) tokenType));
-
-            EasyMock.replay(requestMock);
-
-            TokenProvider tp1 = new Saml1TokenProvider();
-            TokenProvider tp2 = new Saml2TokenProvider();
-            id.setTokenProviders(Arrays.asList(tp1, tp2));
-
             id.issue(requestMock);
 
-            verify(requestMock);
             fail("STSException should be thrown");
-        } catch (Exception e) {
-
+        } catch (STSException e) {
+        	// expected 
+        } finally {
+            verify(requestMock);
         }
     }
 
@@ -405,155 +376,153 @@ public class IssueDelegateTest {
     @Test
     public void TestIssueDelegateWithCertWithWrongStorePass()
             throws CertificateException {
+        IssueDelegate id = new IssueDelegate();
+
+        CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
+        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setKeySignAlias(keySignAlias);
+        certificateVerifierConfig.setKeySignPwd(keySignPwd);
+        certificateVerifierConfig.setStorePath(storePath);
+        certificateVerifierConfig.setStorePwd("xxx");
+        id.setCertificateVerifierConfig(certificateVerifierConfig);
+        JAXBElement<byte[]> jX509Certificate = new JAXBElement<byte[]>(
+                QName.valueOf("X509Certificate"), byte[].class,
+                Base64.decodeBase64(CERT_DATA.getBytes()));
+
+        X509DataType x509DataType = new X509DataType();
+        x509DataType.getX509IssuerSerialOrX509SKIOrX509SubjectName().add(
+                jX509Certificate);
+        JAXBElement<X509DataType> jX509DataType = new JAXBElement<X509DataType>(
+                QName.valueOf("X509Data"), X509DataType.class, x509DataType);
+
+        KeyInfoType keyInfoType = new KeyInfoType();
+        keyInfoType.getContent().add(jX509DataType);
+        JAXBElement<KeyInfoType> jKeyInfoType = new JAXBElement<KeyInfoType>(
+                QName.valueOf("KeyInfo"), KeyInfoType.class, keyInfoType);
+
+        UseKeyType useKeyType = new UseKeyType();
+        useKeyType.setAny(jKeyInfoType);
+        JAXBElement<UseKeyType> jUseKeyType = new JAXBElement<UseKeyType>(
+                QName.valueOf("UseKey"), UseKeyType.class, useKeyType);
+
+        JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
+                "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
+                "TokenType"), String.class,
+                "urn:oasis:names:tc:SAML:1.0:assertion");
+
+        EasyMock.expect(requestMock.getAny()).andStubReturn(
+                Arrays.asList((Object) jUseKeyType, (Object) tokenType));
+        EasyMock.replay(requestMock);
+
+        EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
+                null);
+        EasyMock.replay(passwordCallbackMock);
+
+        id.setPasswordCallback(passwordCallbackMock);
+
+        TokenProvider tp1 = new Saml1TokenProvider();
+        TokenProvider tp2 = new Saml2TokenProvider();
+        id.setTokenProviders(Arrays.asList(tp1, tp2));
+
         try {
-            IssueDelegate id = new IssueDelegate();
-            assertNotNull(id);
-            CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-            certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
-            certificateVerifierConfig.setKeySignAlias(keySignAlias);
-            certificateVerifierConfig.setKeySignPwd(keySignPwd);
-            certificateVerifierConfig.setStorePath(storePath);
-            certificateVerifierConfig.setStorePwd("xxx");
-            id.setCertificateVerifierConfig(certificateVerifierConfig);
-            JAXBElement<byte[]> jX509Certificate = new JAXBElement<byte[]>(
-                    QName.valueOf("X509Certificate"), byte[].class,
-                    Base64.decodeBase64(CERT_DATA.getBytes()));
-
-            X509DataType x509DataType = new X509DataType();
-            x509DataType.getX509IssuerSerialOrX509SKIOrX509SubjectName().add(
-                    jX509Certificate);
-            JAXBElement<X509DataType> jX509DataType = new JAXBElement<X509DataType>(
-                    QName.valueOf("X509Data"), X509DataType.class, x509DataType);
-
-            KeyInfoType keyInfoType = new KeyInfoType();
-            keyInfoType.getContent().add(jX509DataType);
-            JAXBElement<KeyInfoType> jKeyInfoType = new JAXBElement<KeyInfoType>(
-                    QName.valueOf("KeyInfo"), KeyInfoType.class, keyInfoType);
-
-            UseKeyType useKeyType = new UseKeyType();
-            useKeyType.setAny(jKeyInfoType);
-            JAXBElement<UseKeyType> jUseKeyType = new JAXBElement<UseKeyType>(
-                    QName.valueOf("UseKey"), UseKeyType.class, useKeyType);
-
-            JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
-                    "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-                    "TokenType"), String.class,
-                    "urn:oasis:names:tc:SAML:1.0:assertion");
-
-            EasyMock.expect(requestMock.getAny()).andStubReturn(
-                    Arrays.asList((Object) jUseKeyType, (Object) tokenType));
-            EasyMock.replay(requestMock);
-
-            EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
-                    null);
-            EasyMock.replay(passwordCallbackMock);
-
-            id.setPasswordCallback(passwordCallbackMock);
-
-            TokenProvider tp1 = new Saml1TokenProvider();
-            TokenProvider tp2 = new Saml2TokenProvider();
-            id.setTokenProviders(Arrays.asList(tp1, tp2));
-
             id.issue(requestMock);
-
+            fail("STSException should be thrown");
+        } catch (STSException e) {
+        	// expected
+        } finally {
             verify(requestMock);
-            fail("Exception should be thrown");
-        } catch (Exception e) {
-
         }
     }
 
     @Test
     public void TestIssueDelegateWithCertWithoutTokenProvidersAndTokenType()
             throws CertificateException {
+        IssueDelegate id = new IssueDelegate();
+
+        CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
+        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setKeySignAlias(keySignAlias);
+        certificateVerifierConfig.setKeySignPwd(keySignPwd);
+        certificateVerifierConfig.setStorePath(storePath);
+        certificateVerifierConfig.setStorePwd(storePwd);
+        id.setCertificateVerifierConfig(certificateVerifierConfig);
+        JAXBElement<byte[]> jX509Certificate = new JAXBElement<byte[]>(
+                QName.valueOf("X509Certificate"), byte[].class,
+                Base64.decodeBase64(CERT_DATA.getBytes()));
+
+        X509DataType x509DataType = new X509DataType();
+        x509DataType.getX509IssuerSerialOrX509SKIOrX509SubjectName().add(
+                jX509Certificate);
+        JAXBElement<X509DataType> jX509DataType = new JAXBElement<X509DataType>(
+                QName.valueOf("X509Data"), X509DataType.class, x509DataType);
+
+        KeyInfoType keyInfoType = new KeyInfoType();
+        keyInfoType.getContent().add(jX509DataType);
+        JAXBElement<KeyInfoType> jKeyInfoType = new JAXBElement<KeyInfoType>(
+                QName.valueOf("KeyInfo"), KeyInfoType.class, keyInfoType);
+
+        UseKeyType useKeyType = new UseKeyType();
+        useKeyType.setAny(jKeyInfoType);
+        JAXBElement<UseKeyType> jUseKeyType = new JAXBElement<UseKeyType>(
+                QName.valueOf("UseKey"), UseKeyType.class, useKeyType);
+
+        EasyMock.expect(requestMock.getAny()).andStubReturn(
+                Arrays.asList((Object) jUseKeyType));
+        EasyMock.replay(requestMock);
+
+        EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
+                null);
+        EasyMock.replay(passwordCallbackMock);
+
+        id.setPasswordCallback(passwordCallbackMock);
+
+        List<TokenProvider> tps = Collections.emptyList();
+        id.setTokenProviders(tps);
+
         try {
-            IssueDelegate id = new IssueDelegate();
-            assertNotNull(id);
-            CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-            certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
-            certificateVerifierConfig.setKeySignAlias(keySignAlias);
-            certificateVerifierConfig.setKeySignPwd(keySignPwd);
-            certificateVerifierConfig.setStorePath(storePath);
-            certificateVerifierConfig.setStorePwd(storePwd);
-            id.setCertificateVerifierConfig(certificateVerifierConfig);
-            JAXBElement<byte[]> jX509Certificate = new JAXBElement<byte[]>(
-                    QName.valueOf("X509Certificate"), byte[].class,
-                    Base64.decodeBase64(CERT_DATA.getBytes()));
-
-            X509DataType x509DataType = new X509DataType();
-            x509DataType.getX509IssuerSerialOrX509SKIOrX509SubjectName().add(
-                    jX509Certificate);
-            JAXBElement<X509DataType> jX509DataType = new JAXBElement<X509DataType>(
-                    QName.valueOf("X509Data"), X509DataType.class, x509DataType);
-
-            KeyInfoType keyInfoType = new KeyInfoType();
-            keyInfoType.getContent().add(jX509DataType);
-            JAXBElement<KeyInfoType> jKeyInfoType = new JAXBElement<KeyInfoType>(
-                    QName.valueOf("KeyInfo"), KeyInfoType.class, keyInfoType);
-
-            UseKeyType useKeyType = new UseKeyType();
-            useKeyType.setAny(jKeyInfoType);
-            JAXBElement<UseKeyType> jUseKeyType = new JAXBElement<UseKeyType>(
-                    QName.valueOf("UseKey"), UseKeyType.class, useKeyType);
-
-            EasyMock.expect(requestMock.getAny()).andStubReturn(
-                    Arrays.asList((Object) jUseKeyType));
-            EasyMock.replay(requestMock);
-
-            EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
-                    null);
-            EasyMock.replay(passwordCallbackMock);
-
-            id.setPasswordCallback(passwordCallbackMock);
-
-            // TokenProvider tp1 = new Saml1TokenProvider();
-            // TokenProvider tp2 = new Saml2TokenProvider();
-            // id.setTokenProviders(Arrays.asList(tp1, tp2));
-            id.setTokenProviders(new ArrayList<TokenProvider>());
-
             id.issue(requestMock);
-
-            verify(requestMock);
             fail("STSException should be thrown");
         } catch (STSException e) {
-
+        	// expected
+        } finally {
+            verify(requestMock);
         }
     }
 
     @Test
     public void TestIssueDelegateWithoutCertAndUserToken()
             throws CertificateException {
+        IssueDelegate id = new IssueDelegate();
+
+        JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
+                "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
+                "TokenType"), String.class,
+                "urn:oasis:names:tc:SAML:1.0:assertion");
+
+        EasyMock.expect(requestMock.getAny()).andStubReturn(
+                Arrays.asList((Object) tokenType));
+        EasyMock.replay(requestMock);
+
+        EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
+                null);
+        EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn(
+                null);
+        EasyMock.replay(passwordCallbackMock);
+
+        id.setPasswordCallback(passwordCallbackMock);
+
+        TokenProvider tp1 = new Saml1TokenProvider();
+        TokenProvider tp2 = new Saml2TokenProvider();
+        id.setTokenProviders(Arrays.asList(tp1, tp2));
+
         try {
-            IssueDelegate id = new IssueDelegate();
-            assertNotNull(id);
-
-            JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
-                    "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
-                    "TokenType"), String.class,
-                    "urn:oasis:names:tc:SAML:1.0:assertion");
-
-            EasyMock.expect(requestMock.getAny()).andStubReturn(
-                    Arrays.asList((Object) tokenType));
-            EasyMock.replay(requestMock);
-
-            EasyMock.expect(passwordCallbackMock.resetUsername()).andReturn(
-                    null);
-            EasyMock.expect(passwordCallbackMock.resetPassword()).andReturn(
-                    null);
-            EasyMock.replay(passwordCallbackMock);
-
-            id.setPasswordCallback(passwordCallbackMock);
-
-            TokenProvider tp1 = new Saml1TokenProvider();
-            TokenProvider tp2 = new Saml2TokenProvider();
-            id.setTokenProviders(Arrays.asList(tp1, tp2));
-
             id.issue(requestMock);
 
-            verify(requestMock);
             fail("STSException should be thrown");
         } catch (STSException e) {
-
+        	// expected
+        } finally {
+            verify(requestMock);
         }
     }
 
@@ -611,8 +580,8 @@ public class IssueDelegateTest {
 
         try {
             id.issue(requestMock);
-            fail("CertificateException should be thrown");
-        } catch (Exception e) {
+            fail("STSException should be thrown");
+        } catch (STSException e) {
 
         }
 
@@ -626,14 +595,9 @@ public class IssueDelegateTest {
 
         CertificateFactory certificateFactory = CertificateFactory
                 .getInstance("X.509");
-        X509Certificate x509Certificate = null;
-        try {
-            x509Certificate = (X509Certificate) certificateFactory
+        X509Certificate x509Certificate = (X509Certificate) certificateFactory
                     .generateCertificate(new ByteArrayInputStream(Base64
                             .decodeBase64(CERT_DATA.getBytes())));
-        } catch (CertificateException e) {
-            LOG.error(e);
-        }
         JAXBElement<X509Certificate> jX509Certificate = new JAXBElement<X509Certificate>(
                 QName.valueOf("X509Certificate"), X509Certificate.class,
                 x509Certificate);

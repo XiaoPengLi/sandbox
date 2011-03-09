@@ -19,70 +19,48 @@
 
 package org.apache.cxf.ws.security.sts.provider;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import javax.xml.namespace.QName;
-import junit.framework.TestCase;
-import org.junit.Test;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.cxf.ws.security.sts.provider.ProviderPasswordCallback;
 import org.apache.ws.security.WSPasswordCallback;
+import org.junit.Test;
 
 public class ProviderPasswordCallbackTest {
 
-	private static final Log LOG = LogFactory
-    .getLog(ProviderPasswordCallbackTest.class.getName());
-	
     WSPasswordCallback callback = new WSPasswordCallback("", "", "",
             WSPasswordCallback.USERNAME_TOKEN_UNKNOWN);
 
     @Test
-    public void testProviderPasswordCallbackNullParameters() {
-
+    public void testProviderPasswordCallbackNullParameters() throws Exception {
+        ProviderPasswordCallback ppc = new ProviderPasswordCallback();
         try {
-            ProviderPasswordCallback ppc = new ProviderPasswordCallback();
             ppc.handle(null);
             fail("NullPointerException should be thrown");
-        } catch (Exception e) {
-           LOG.error(e);
+        } catch (NullPointerException e) {
+           // expected
         } 
     }
 
     @Test
-    public void testProviderPasswordCallbackEmptyCallbackParameters() {
-
+    public void testProviderPasswordCallbackEmptyCallbackParameters() throws Exception  {
+        ProviderPasswordCallback ppc = new ProviderPasswordCallback();
         try {
-            ProviderPasswordCallback ppc = new ProviderPasswordCallback();
-            Callback[] c = new WSPasswordCallback[1];
-            c[0] = createMock(WSPasswordCallback.class);
-            ppc.handle(c);
+            ppc.handle(new WSPasswordCallback[] { new WSPasswordCallback("", WSPasswordCallback.UNKNOWN) });
             fail("UnsupportedCallbackException should be thrown");
-        } catch (Exception e) {
-        	LOG.error(e);
+        } catch (UnsupportedCallbackException e) {
+            // expected
         } 
     }
 
     @Test
-    public void testProviderPasswordCallback() {
-        try {
-            ProviderPasswordCallback ppc = new ProviderPasswordCallback();
-            WSPasswordCallback[] c = new WSPasswordCallback[1];
-            c[0] = new WSPasswordCallback("test", "", "",
-                    WSPasswordCallback.USERNAME_TOKEN_UNKNOWN);
-            ppc.handle(c);
-        } catch (Exception e) {
-        	LOG.error(e);
-        }
+    public void testProviderPasswordCallback() throws Exception {
+        ProviderPasswordCallback ppc = new ProviderPasswordCallback();
+        WSPasswordCallback[] c = new WSPasswordCallback[1];
+        c[0] = new WSPasswordCallback("test", "", "",
+                WSPasswordCallback.USERNAME_TOKEN_UNKNOWN);
+        ppc.handle(c);
     }
 
     @Test
