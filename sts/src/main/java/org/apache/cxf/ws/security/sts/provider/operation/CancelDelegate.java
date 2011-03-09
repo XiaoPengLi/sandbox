@@ -19,15 +19,20 @@
 
 package org.apache.cxf.ws.security.sts.provider.operation;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
 
 public class CancelDelegate implements CancelOperation {
 
+	private static final Log LOG = LogFactory
+    .getLog(CancelDelegate.class.getName());
+	
     @Override
     public RequestSecurityTokenResponseType cancel(
             RequestSecurityTokenType request) {
-        System.out.println("dummy cancel");
+        LOG.info("dummy cancel");
         return null;
     }
 

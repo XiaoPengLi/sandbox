@@ -19,15 +19,20 @@
 
 package org.apache.cxf.ws.security.sts.provider.operation;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenCollectionType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseCollectionType;
 
 public class RequestCollectionDelegate implements RequestCollectionOperation {
 
+	private static final Log LOG = LogFactory
+    .getLog(RequestCollectionDelegate.class.getName());
+	
     @Override
     public RequestSecurityTokenResponseCollectionType requestCollection(
             RequestSecurityTokenCollectionType requestCollection) {
-        System.out.println("dummy requestCollection");
+        LOG.info("dummy requestCollection");
         return null;
     }
 
