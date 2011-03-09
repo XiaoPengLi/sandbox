@@ -56,6 +56,8 @@ import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import javax.xml.namespace.QName;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.ws.security.sts.provider.ProviderPasswordCallback;
 import org.apache.cxf.ws.security.sts.provider.STSException;
@@ -82,6 +84,9 @@ import org.w3c.dom.NodeList;
 
 public class IssueDelegate implements IssueOperation {
 
+	private static final Log LOG = LogFactory
+    .getLog(IssueDelegate.class.getName());
+	
     private static final org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory WS_TRUST_FACTORY = new org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory();
     private static final org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.ObjectFactory WSSE_FACTORY = new org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.ObjectFactory();
 
@@ -329,7 +334,7 @@ public class IssueDelegate implements IssueOperation {
                     if (!password.equals(currentPassword.getTextContent())) {
                         throw new STSException("Wrong password");
                     }
-                    System.out.println("Authentication successful for "
+                    LOG.info("Authentication successful for "
                             + username);
                     break;
                 }
