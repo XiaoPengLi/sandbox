@@ -12,7 +12,7 @@ http://www.springframework.org/schema/util http://www.springframework.org/schema
 	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
 
 	<bean id="securityTokenServiceProviderBean"
-		class="org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceImpl">
+		class="org.apache.cxf.ws.security.sts.provider.SecurityTokenServiceProvider">
 		<property name="cancelOperation" ref="cancelDelegate"/>
 		<property name="issueOperation" ref="issueDelegate"/>
 		<property name="keyExchangeTokenOperation" ref="keyExchangeTokenDelegate"/>
