@@ -164,7 +164,8 @@ public class SecurityTokenServiceProvider implements Provider<Source> {
                 Class<?>[] paramClass = methods[x].getParameterTypes();
                 if (paramClass.length == 1
                         && paramClass[0].equals(rst.getClass())) {
-                    RequestSecurityTokenResponseCollectionType tokenResponse = (RequestSecurityTokenResponseCollectionType) methods[x]
+                    RequestSecurityTokenResponseCollectionType tokenResponse = 
+                        (RequestSecurityTokenResponseCollectionType) methods[x]
                             .invoke(operationImpl, rst);
                     SOAPMessage soapResponse = convertJAXBToSOAPMessage(tokenResponse);
                     response.setNode(soapResponse.getSOAPPart());
