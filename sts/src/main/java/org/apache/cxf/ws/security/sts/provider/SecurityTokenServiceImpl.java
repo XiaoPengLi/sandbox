@@ -31,7 +31,11 @@ import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseTy
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.wsdl.SecurityTokenService;
 
-@javax.jws.WebService(serviceName = "SecurityTokenServiceProvider", portName = "SecurityTokenServiceSOAP", targetNamespace = "http://docs.oasis-open.org/ws-sx/ws-trust/200512/wsdl", wsdlLocation = "WEB-INF/classes/model/ws-trust-1.4-service.wsdl", endpointInterface = "org.oasis_open.docs.ws_sx.ws_trust._200512.wsdl.SecurityTokenService")
+@javax.jws.WebService(serviceName = "SecurityTokenServiceProvider", 
+        portName = "SecurityTokenServiceSOAP", 
+        targetNamespace = "http://docs.oasis-open.org/ws-sx/ws-trust/200512/wsdl", 
+        wsdlLocation = "WEB-INF/classes/model/ws-trust-1.4-service.wsdl", 
+        endpointInterface = "org.oasis_open.docs.ws_sx.ws_trust._200512.wsdl.SecurityTokenService")
 public class SecurityTokenServiceImpl implements SecurityTokenService {
 
     private CancelOperation cancelOperation;

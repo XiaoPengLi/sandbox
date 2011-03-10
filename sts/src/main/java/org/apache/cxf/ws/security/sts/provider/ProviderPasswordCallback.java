@@ -40,7 +40,6 @@ public class ProviderPasswordCallback implements CallbackHandler {
             if (usage == WSPasswordCallback.USERNAME_TOKEN_UNKNOWN) {
                 username = pc.getIdentifier();
                 password = pc.getPassword();
-            } else if (usage == WSPasswordCallback.SIGNATURE) {
             } else {
                 throw new UnsupportedCallbackException(callbacks[i],
                         "Unrecognized Callback");
