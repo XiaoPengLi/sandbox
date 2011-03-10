@@ -337,7 +337,7 @@ public class IssueDelegate implements IssueOperation {
 				}
 			}
 		} catch (Exception e) {
-			throw new STSException("Erorr during authentication", e);
+			throw new STSException("Error during authentication", e);
 		}
 	}
 
