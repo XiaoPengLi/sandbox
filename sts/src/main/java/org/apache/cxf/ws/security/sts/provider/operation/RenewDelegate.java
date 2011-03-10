@@ -26,9 +26,9 @@ import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
 
 public class RenewDelegate implements RenewOperation {
 
-	private static final Log LOG = LogFactory
-    .getLog(RenewDelegate.class.getName());
-	
+    private static final Log LOG = LogFactory.getLog(RenewDelegate.class
+            .getName());
+
     @Override
     public RequestSecurityTokenResponseType renew(
             RequestSecurityTokenType request) {

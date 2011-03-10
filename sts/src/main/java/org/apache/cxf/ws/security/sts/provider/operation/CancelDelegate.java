@@ -26,9 +26,9 @@ import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
 
 public class CancelDelegate implements CancelOperation {
 
-	private static final Log LOG = LogFactory
-    .getLog(CancelDelegate.class.getName());
-	
+    private static final Log LOG = LogFactory.getLog(CancelDelegate.class
+            .getName());
+
     @Override
     public RequestSecurityTokenResponseType cancel(
             RequestSecurityTokenType request) {

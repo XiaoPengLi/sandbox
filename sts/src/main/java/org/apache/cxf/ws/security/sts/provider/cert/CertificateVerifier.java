@@ -38,7 +38,7 @@ import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CertificateVerifier {
+public final class CertificateVerifier {
 
     /**
      * Attempts to build a certification chain for given certificate and to
@@ -63,9 +63,14 @@ public class CertificateVerifier {
      *             path cannot be built or some certificate in the chain is
      *             expired or CRL checks are failed)
      */
+    
+    private CertificateVerifier() {
+        
+    }
+    
     public static PKIXCertPathBuilderResult verifyCertificate(
-            X509Certificate cert, Set<X509Certificate> additionalCerts)
-            throws CertificateVerificationException {
+            X509Certificate cert, 
+            Set<X509Certificate> additionalCerts) throws CertificateVerificationException {
         try {
             // Check for self-signed certificate
             if (isSelfSigned(cert)) {
@@ -111,8 +116,8 @@ public class CertificateVerifier {
     /**
      * Checks whether given X.509 certificate is self-signed.
      */
-    public static boolean isSelfSigned(X509Certificate cert)
-            throws CertificateException, NoSuchAlgorithmException,
+    public static boolean isSelfSigned(X509Certificate cert) throws CertificateException, 
+    NoSuchAlgorithmException,
             NoSuchProviderException {
         try {
             // Try to verify certificate signature with its own public key
@@ -147,8 +152,7 @@ public class CertificateVerifier {
      */
     private static PKIXCertPathBuilderResult verifyCertificate(
             X509Certificate cert, Set<X509Certificate> trustedRootCerts,
-            Set<X509Certificate> intermediateCerts)
-            throws GeneralSecurityException {
+            Set<X509Certificate> intermediateCerts) throws GeneralSecurityException {
 
         // Create the selector that specifies the starting certificate
         X509CertSelector selector = new X509CertSelector();

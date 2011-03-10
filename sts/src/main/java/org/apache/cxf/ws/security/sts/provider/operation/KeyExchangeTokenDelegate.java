@@ -26,9 +26,9 @@ import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
 
 public class KeyExchangeTokenDelegate implements KeyExchangeTokenOperation {
 
-	private static final Log LOG = LogFactory
-    .getLog(KeyExchangeTokenDelegate.class.getName());
-	
+    private static final Log LOG = LogFactory
+            .getLog(KeyExchangeTokenDelegate.class.getName());
+
     @Override
     public RequestSecurityTokenResponseType keyExchangeToken(
             RequestSecurityTokenType request) {

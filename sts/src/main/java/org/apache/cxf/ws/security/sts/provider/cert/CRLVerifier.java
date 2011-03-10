@@ -52,7 +52,7 @@ import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.X509Extensions;
 
-public class CRLVerifier {
+public final class CRLVerifier {
 
     /**
      * Extracts the CRL distribution points from the certificate (if available)
@@ -64,8 +64,12 @@ public class CRLVerifier {
      * @throws CertificateVerificationException
      *             if the certificate is revoked
      */
-    public static void verifyCertificateCRLs(X509Certificate cert)
-            throws CertificateVerificationException {
+    
+    private CRLVerifier() {
+        
+    }
+    
+    public static void verifyCertificateCRLs(X509Certificate cert) throws CertificateVerificationException {
         try {
             List<String> crlDistPoints = getCrlDistributionPoints(cert);
             for (String crlDP : crlDistPoints) {
@@ -111,8 +115,8 @@ public class CRLVerifier {
      * Downloads a CRL from given LDAP url, e.g.
      * ldap://ldap.infonotary.com/dc=identity-ca,dc=infonotary,dc=com
      */
-    private static X509CRL downloadCRLFromLDAP(String ldapURL)
-            throws CertificateException, NamingException, CRLException,
+    private static X509CRL downloadCRLFromLDAP(String ldapURL) throws CertificateException, 
+    NamingException, CRLException,
             CertificateVerificationException {
         Hashtable<String, String> env = new Hashtable<String, String>();
         env.put(Context.INITIAL_CONTEXT_FACTORY,
@@ -138,8 +142,8 @@ public class CRLVerifier {
      * Downloads a CRL from given HTTP/HTTPS/FTP URL, e.g.
      * http://crl.infonotary.com/crl/identity-ca.crl
      */
-    private static X509CRL downloadCRLFromWeb(String crlURL)
-            throws MalformedURLException, IOException, CertificateException,
+    private static X509CRL downloadCRLFromWeb(String crlURL) throws MalformedURLException,
+    IOException, CertificateException,
             CRLException {
         URL url = new URL(crlURL);
         InputStream crlStream = url.openStream();
@@ -157,8 +161,8 @@ public class CRLVerifier {
      * "CRL Distribution Point" extension in a X.509 certificate. If CRL
      * distribution point extension is unavailable, returns an empty list.
      */
-    public static List<String> getCrlDistributionPoints(X509Certificate cert)
-            throws CertificateParsingException, IOException {
+    public static List<String> 
+    getCrlDistributionPoints(X509Certificate cert) throws CertificateParsingException, IOException {
         byte[] crldpExt = cert
                 .getExtensionValue(X509Extensions.CRLDistributionPoints.getId());
         if (crldpExt == null) {

@@ -26,9 +26,9 @@ import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseCo
 
 public class RequestCollectionDelegate implements RequestCollectionOperation {
 
-	private static final Log LOG = LogFactory
-    .getLog(RequestCollectionDelegate.class.getName());
-	
+    private static final Log LOG = LogFactory
+            .getLog(RequestCollectionDelegate.class.getName());
+
     @Override
     public RequestSecurityTokenResponseCollectionType requestCollection(
             RequestSecurityTokenCollectionType requestCollection) {

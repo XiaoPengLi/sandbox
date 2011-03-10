@@ -26,9 +26,9 @@ import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
 
 public class ValidateDelegate implements ValidateOperation {
 
-	private static final Log LOG = LogFactory
-    .getLog(ValidateDelegate.class.getName());
-	
+    private static final Log LOG = LogFactory.getLog(ValidateDelegate.class
+            .getName());
+
     @Override
     public RequestSecurityTokenResponseType validate(
             RequestSecurityTokenType request) {
