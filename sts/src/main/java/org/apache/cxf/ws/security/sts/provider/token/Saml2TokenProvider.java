@@ -22,6 +22,8 @@ package org.apache.cxf.ws.security.sts.provider.token;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 
+import org.w3c.dom.Element;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
@@ -49,11 +51,8 @@ import org.opensaml.saml2.core.impl.NameIDBuilder;
 import org.opensaml.saml2.core.impl.SubjectBuilder;
 import org.opensaml.saml2.core.impl.SubjectConfirmationBuilder;
 import org.opensaml.xml.security.credential.BasicKeyInfoGeneratorFactory;
-import org.opensaml.xml.security.keyinfo.KeyInfoGenerator;
 import org.opensaml.xml.security.x509.BasicX509Credential;
-import org.opensaml.xml.security.x509.X509KeyInfoGeneratorFactory;
 import org.opensaml.xml.signature.KeyInfo;
-import org.w3c.dom.Element;
 
 public class Saml2TokenProvider implements TokenProvider {
 

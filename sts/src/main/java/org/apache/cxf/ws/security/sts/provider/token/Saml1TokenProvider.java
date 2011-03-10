@@ -21,7 +21,7 @@ package org.apache.cxf.ws.security.sts.provider.token;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
-
+import org.w3c.dom.Element;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
@@ -32,13 +32,13 @@ import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.xml.security.x509.BasicX509Credential;
 import org.opensaml.xml.security.x509.X509KeyInfoGeneratorFactory;
 import org.opensaml.xml.signature.KeyInfo;
-import org.w3c.dom.Element;
+
 
 public class Saml1TokenProvider implements TokenProvider {
 
-	private static final Log LOG = LogFactory
-    .getLog(Saml1TokenProvider.class.getName());
-	
+    private static final Log LOG = LogFactory.getLog(Saml1TokenProvider.class
+            .getName());
+
     @Override
     public String getTokenType() {
         return SAMLConstants.SAML1_NS;
@@ -73,7 +73,8 @@ public class Saml1TokenProvider implements TokenProvider {
     }
 
     private org.opensaml.saml1.core.Subject createSubjectSAML1(String username) {
-        org.opensaml.saml1.core.NameIdentifier nameID = (new org.opensaml.saml1.core.impl.NameIdentifierBuilder())
+        org.opensaml.saml1.core.NameIdentifier nameID = 
+            (new org.opensaml.saml1.core.impl.NameIdentifierBuilder())
                 .buildObject();
         nameID.setNameIdentifier(username);
         String format = "urn:oasis:names:tc:SAML:1.1:nameid-format:transient";
@@ -90,11 +91,13 @@ public class Saml1TokenProvider implements TokenProvider {
 
         if (confirmationString != null) {
 
-            org.opensaml.saml1.core.ConfirmationMethod confirmationMethod = (new org.opensaml.saml1.core.impl.ConfirmationMethodBuilder())
+            org.opensaml.saml1.core.ConfirmationMethod confirmationMethod = 
+                (new org.opensaml.saml1.core.impl.ConfirmationMethodBuilder())
                     .buildObject();
             confirmationMethod.setConfirmationMethod(confirmationString);
 
-            org.opensaml.saml1.core.SubjectConfirmation confirmation = (new org.opensaml.saml1.core.impl.SubjectConfirmationBuilder())
+            org.opensaml.saml1.core.SubjectConfirmation confirmation = 
+                (new org.opensaml.saml1.core.impl.SubjectConfirmationBuilder())
                     .buildObject();
             confirmation.getConfirmationMethods().add(confirmationMethod);
 
@@ -106,18 +109,21 @@ public class Saml1TokenProvider implements TokenProvider {
     private org.opensaml.saml1.core.Subject createSubjectSAML1(
             X509Certificate certificate) throws Exception {
         DefaultBootstrap.bootstrap();
-        org.opensaml.saml1.core.NameIdentifier nameID = (new org.opensaml.saml1.core.impl.NameIdentifierBuilder())
+        org.opensaml.saml1.core.NameIdentifier nameID = 
+            (new org.opensaml.saml1.core.impl.NameIdentifierBuilder())
                 .buildObject();
         nameID.setNameIdentifier(certificate.getSubjectDN().getName());
         nameID.setFormat("urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName");
         org.opensaml.saml1.core.Subject subject = (new org.opensaml.saml1.core.impl.SubjectBuilder())
                 .buildObject();
         subject.setNameIdentifier(nameID);
-        org.opensaml.saml1.core.ConfirmationMethod confirmationMethod = (new org.opensaml.saml1.core.impl.ConfirmationMethodBuilder())
+        org.opensaml.saml1.core.ConfirmationMethod confirmationMethod = 
+            (new org.opensaml.saml1.core.impl.ConfirmationMethodBuilder())
                 .buildObject();
         confirmationMethod
                 .setConfirmationMethod("Urn:oasis:names:tc:SAML:1.0:cm:holder-of-key");
-        org.opensaml.saml1.core.SubjectConfirmation confirmation = (new org.opensaml.saml1.core.impl.SubjectConfirmationBuilder())
+        org.opensaml.saml1.core.SubjectConfirmation confirmation = 
+            (new org.opensaml.saml1.core.impl.SubjectConfirmationBuilder())
                 .buildObject();
         confirmation.getConfirmationMethods().add(confirmationMethod);
         BasicX509Credential keyInfoCredential = new BasicX509Credential();
@@ -132,7 +138,8 @@ public class Saml1TokenProvider implements TokenProvider {
 
     private org.opensaml.saml1.core.Assertion createAuthnAssertionSAML1(
             org.opensaml.saml1.core.Subject subject) {
-        org.opensaml.saml1.core.AuthenticationStatement authnStatement = (new org.opensaml.saml1.core.impl.AuthenticationStatementBuilder())
+        org.opensaml.saml1.core.AuthenticationStatement authnStatement = 
+            (new org.opensaml.saml1.core.impl.AuthenticationStatementBuilder())
                 .buildObject();
         authnStatement.setSubject(subject);
         // authnStatement.setAuthenticationMethod(strAuthMethod);
