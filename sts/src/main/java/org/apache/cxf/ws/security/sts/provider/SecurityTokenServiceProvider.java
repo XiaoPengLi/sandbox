@@ -167,8 +167,8 @@ public class SecurityTokenServiceProvider implements Provider<Source> {
                     RequestSecurityTokenResponseCollectionType tokenResponse = 
                         (RequestSecurityTokenResponseCollectionType) methods[x]
                             .invoke(operationImpl, rst);
-                    SOAPMessage soapResponse = convertJAXBToSOAPMessage(tokenResponse);
-                    response.setNode(soapResponse.getSOAPPart());
+                    Node responseNode = convertJAXBToNode(tokenResponse);
+                    response.setNode(responseNode);
                     break;
                 }
             }
@@ -213,7 +213,7 @@ public class SecurityTokenServiceProvider implements Provider<Source> {
         return request;
     }
 
-    private SOAPMessage convertJAXBToSOAPMessage(
+    private Node convertJAXBToNode(
             RequestSecurityTokenResponseCollectionType response) throws Exception {
         SOAPMessage soapResponse = null;
         Marshaller marshaller = jaxbContext.createMarshaller();
@@ -226,10 +226,8 @@ public class SecurityTokenServiceProvider implements Provider<Source> {
                         response), soapResponse.getSOAPPart());
         Node msgNode = soapResponse.getSOAPPart().getFirstChild()
                 .getFirstChild();
-        soapResponse.getSOAPPart().replaceChild(msgNode,
-                soapResponse.getSOAPPart().getFirstChild());
-
-        return soapResponse;
+        
+        return msgNode;
     }
 
     public CancelOperation getCancelOperation() {
