@@ -19,10 +19,7 @@
 
 package org.apache.cxf.ws.security.sts.provider.operation;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateException;
@@ -34,7 +31,6 @@ import java.util.List;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.ws.security.sts.provider.ProviderPasswordCallback;
 import org.apache.cxf.ws.security.sts.provider.STSException;
@@ -49,26 +45,32 @@ import org.oasis_open.docs.ws_sx.ws_trust._200512.UseKeyType;
 import org.w3._2000._09.xmldsig.KeyInfoType;
 import org.w3._2000._09.xmldsig.X509DataType;
 
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.verify;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+
 public class IssueDelegateTest {
 
+    
+
+    private static final String CERT_DATA = 
+        "MIICsjCCAhsCBRI0VniSMA0GCSqGSIb3DQEBBQUAMIGjMQswCQYDVQQGEwJVQTEQMA4GA1UECAwHTHVnYW5zazEQMA4GA1UEBwwHTHVnYW5zazESMBAGA1UECgwJSW5mb3B1bHNlMRMwEQYDVQQLDApUYWxlbmRUZWFtMRkwFwYDVQQDDBBQYXZlbFZhc2lsY2hlbmtvMSwwKgYJKoZIhvcNAQkBFh1QYXZlbC5TLlZhc2lsY2hlbmtvQGdtYWlsLmNvbTAeFw0xMTAyMjMxMjA4NDVaFw0yMTAyMjAxMjA4NDVaMIGaMRowGAYDVQQDExFUYWxlbmRDZXJ0aWZpY2F0ZTEPMA0GA1UECxMGVGFsZW5kMQ8wDQYDVQQKEwZUYWxlbmQxEzARBgNVBAcTCkN1c3RvbUNpdHkxFDASBgNVBAgTC0N1c3RvbVN0YXRlMQswCQYDVQQGEwJERTEiMCAGCSqGSIb3DQEJARYTZXhhbXBsZUBleGFtcGxlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAqD49IHig6rd9p5NTF0YzI+XMlUZThG5Us1DdcOUpPTp2i5m3wukWlRXFd4BZcp+PClbvyuNr/8kF0rDcxejvqMZrloQ1h4ncJvSW9udULh+M53vynuhSTDQWVWIOPxbREInNkx1kTm/uqhWf8JtewW6maH3Pz4Ll6Hcj8KWsnIUCAwEAATANBgkqhkiG9w0BAQUFAAOBgQB+EALhJN+LKDtTLSpgA3osgXmyV7UfKujTH/RQwGkMyM8KBzhaXvLgfLrcNrVFNzvv/BcWs2vxc15r0RmkAaSkpZig0scWR98mUW466xoh3cbbt4Dj7hmiinvyBingVdn3Z2IjRzfW2aACsMgk8e5kyhHdRY8OMucKxrDaQn0amg==";
     RequestSecurityTokenType requestMock = createMock(RequestSecurityTokenType.class);
 
-    ProviderPasswordCallback passwordCallbackMock = createMock(ProviderPasswordCallback.class);
+    ProviderPasswordCallback passwordCallbackMock = createMock(ProviderPasswordCallback.class); 
+    private String storePath = "/sts.jks";
+    private String storePwd = "atleast8";
+    private String keyCertAlias = "cacert";
+    private String keySignAlias = "securitytokenserviceprovider";
+    private String keySignPwd = "empty";
 
-    private static final String CERT_DATA = "MIICsjCCAhsCBRI0VniSMA0GCSqGSIb3DQEBBQUAMIGjMQswCQYDVQQGEwJVQTEQMA4GA1UECAwHTHVnYW5zazEQMA4GA1UEBwwHTHVnYW5zazESMBAGA1UECgwJSW5mb3B1bHNlMRMwEQYDVQQLDApUYWxlbmRUZWFtMRkwFwYDVQQDDBBQYXZlbFZhc2lsY2hlbmtvMSwwKgYJKoZIhvcNAQkBFh1QYXZlbC5TLlZhc2lsY2hlbmtvQGdtYWlsLmNvbTAeFw0xMTAyMjMxMjA4NDVaFw0yMTAyMjAxMjA4NDVaMIGaMRowGAYDVQQDExFUYWxlbmRDZXJ0aWZpY2F0ZTEPMA0GA1UECxMGVGFsZW5kMQ8wDQYDVQQKEwZUYWxlbmQxEzARBgNVBAcTCkN1c3RvbUNpdHkxFDASBgNVBAgTC0N1c3RvbVN0YXRlMQswCQYDVQQGEwJERTEiMCAGCSqGSIb3DQEJARYTZXhhbXBsZUBleGFtcGxlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAqD49IHig6rd9p5NTF0YzI+XMlUZThG5Us1DdcOUpPTp2i5m3wukWlRXFd4BZcp+PClbvyuNr/8kF0rDcxejvqMZrloQ1h4ncJvSW9udULh+M53vynuhSTDQWVWIOPxbREInNkx1kTm/uqhWf8JtewW6maH3Pz4Ll6Hcj8KWsnIUCAwEAATANBgkqhkiG9w0BAQUFAAOBgQB+EALhJN+LKDtTLSpgA3osgXmyV7UfKujTH/RQwGkMyM8KBzhaXvLgfLrcNrVFNzvv/BcWs2vxc15r0RmkAaSkpZig0scWR98mUW466xoh3cbbt4Dj7hmiinvyBingVdn3Z2IjRzfW2aACsMgk8e5kyhHdRY8OMucKxrDaQn0amg==";
-    // private static final String CERT_DATA =
-    // "MIICbDCCAdWgAwIBAgIBezANBgkqhkiG9w0BAQUFADAhMR8wHQYDVQQDDBZSdURpLVJvb3RDQS0wMUBydWRpLVBDMB4XDTEwMTEyMjE2MzkzNVoXDTExMDMwMjE2MzkzNVowJzElMCMGA1UEAwwcU2VjdXJpdHlUb2tlblNlcnZpY2VQcm92aWRlcjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAl4sZX2T61J+5lm1fsSMDn5KFkiYbOGYaSXN8CC57aEZjVx1m7wKuQNNaskC5DA+x1mLcFqWN5OqO6+gphbHnZ3/LStRLQfckmv/2Kigg2MVikNduIpT94nEmKl4FP5aI+yDAGofXLUjnpiBGHUoMj8qVYmM3n4ZgyZXuX7/x3ukCAwEAAaOBrTCBqjAOBgNVHQ8BAf8EBAMCBDAwRAYDVR0jBD0wO4AU+pT7F58ucXMA186r19VELZeiIyyhIKQeMBwxGjAYBgNVBAMMEVJ1RGlfQ0EwMUBpYWJnLmRlggF7MFIGA1UdHwEB/wRIMEYwRKBCoECCPmh0dHA6Ly9zZXJ2aWNlcy5uYXRvLmludC9ERVUvQncvSVQvUnVEaS9JQVMvMDAxL1NvYVBraV9TZXJ2aWNlMA0GCSqGSIb3DQEBBQUAA4GBAFL1KM415BxQzn6zGHtI2RhkB2NcNQNkrybKfp2VrP66zcL9aIB5HRRN0RFFikLoSiJX7jHESS+tepGwg56kOgPk2f80WbHeMapeYK8MDT0F+yLdufEhAYbKNT7NALHVRA4HN+CEi4PHa9qVOOoJ2wmzhxrD4fVfUv/jWYY/+X4i";
-    // private static final String CERT_DATA =
-    // "MIICcTCCAdoCBRI0VniUMA0GCSqGSIb3DQEBBQUAMH8xCzAJBgNVBAYTAkRFMRAwDgYDVQQIDAcxMTExMTExMRAwDgYDVQQHDAcxMTExMTExMRAwDgYDVQQKDAcxMTExMTExMRAwDgYDVQQLDAcxMTExMTExMRAwDgYDVQQDDAcxMTExMTExMRYwFAYJKoZIhvcNAQkBFgcxMTExMTExMB4XDTExMDIwMjE1Mjk0NloXDTExMDIwMzE1Mjk0NlowfzEQMA4GA1UEAxMHMjIyMjIyMjEQMA4GA1UECxMHMjIyMjIyMjEQMA4GA1UEChMHMjIyMjIyMjEQMA4GA1UEBxMHMjIyMjIyMjEQMA4GA1UECBMHMjIyMjIyMjELMAkGA1UEBhMCREUxFjAUBgkqhkiG9w0BCQEWBzIyMjIyMjIwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAKaHED65XZ38tEextdY3qkHFR1SGcbnyP/GFbwJpFp2KGLTuO4+0jLfo4uYpgzucHt3kKtHZEzYPM/8GX3dWra16JcoMyP1UZdDnUNsURjZfDG90VwF2ugku/RtyM++virK7mkKnvWrMrmuq68vhcUGoUpVG9gt6ZmmWHZJ5dyYHAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAd/bbgvqUPQNkrnNGwHSPksH6jDSDWqLVmUwlPjLfFxaY7l8SYhMr/OznikO7ANezS8et/HKPrl0LT6QlH50AiTaST5u7w5qKpsrHEPx94GYx9CxAXRBbCiE5YV4yf/yFTbVTh2vKSfCMARtNcfLEROTpG3/yKCijnC8uwj4QjHY=";
-
-    private static final String storePath = "/sts.jks";
-    private static final String storePwd = "atleast8";
-    private static final String keyCertAlias = "cacert";
-    private static final String keySignAlias = "securitytokenserviceprovider";
-    private static final String keySignPwd = "empty";
-
+    
+    
     @Test
-    public void TestIssueDelegateNullParameter() {
+    public void testIssueDelegateNullParameter() {
         IssueDelegate id = new IssueDelegate();
         ProviderPasswordCallback passwordCallback = new ProviderPasswordCallback();
         id.setPasswordCallback(passwordCallback);
@@ -82,7 +84,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegate() {
+    public void testIssueDelegate() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
         certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
@@ -162,7 +164,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegateWrongPassword() {
+    public void testIssueDelegateWrongPassword() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
         certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
@@ -206,7 +208,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegateWrongSignKey() {
+    public void testIssueDelegateWrongSignKey() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
         certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
@@ -249,7 +251,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegateWrongSignAlias() {
+    public void testIssueDelegateWrongSignAlias() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
         certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
@@ -293,7 +295,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegateUsernameNull() {
+    public void testIssueDelegateUsernameNull() {
         IssueDelegate id = new IssueDelegate();
         assertNotNull(id);
 
@@ -320,7 +322,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegateWithCert() throws CertificateException {
+    public void testIssueDelegateWithCert() throws CertificateException {
         IssueDelegate id = new IssueDelegate();
         assertNotNull(id);
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
@@ -374,8 +376,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegateWithCertWithWrongStorePass()
-            throws CertificateException {
+    public void testIssueDelegateWithCertWithWrongStorePass() throws CertificateException {
         IssueDelegate id = new IssueDelegate();
 
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
@@ -435,8 +436,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegateWithCertWithoutTokenProvidersAndTokenType()
-            throws CertificateException {
+    public void testIssueDelegateWithCertWithoutTokenProvidersAndTokenType() throws CertificateException {
         IssueDelegate id = new IssueDelegate();
 
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
@@ -490,8 +490,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegateWithoutCertAndUserToken()
-            throws CertificateException {
+    public void testIssueDelegateWithoutCertAndUserToken() throws CertificateException {
         IssueDelegate id = new IssueDelegate();
 
         JAXBElement<String> tokenType = new JAXBElement<String>(new QName(
@@ -527,7 +526,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegateWithInvalidCert() throws CertificateException {
+    public void testIssueDelegateWithInvalidCert() throws CertificateException {
         IssueDelegate id = new IssueDelegate();
         assertNotNull(id);
 
@@ -589,7 +588,7 @@ public class IssueDelegateTest {
     }
 
     @Test
-    public void TestIssueDelegateWithInvalidCert2() throws CertificateException {
+    public void testIssueDelegateWithInvalidCert2() throws CertificateException {
         IssueDelegate id = new IssueDelegate();
         assertNotNull(id);
 

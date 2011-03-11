@@ -19,13 +19,12 @@
 
 package org.apache.cxf.ws.security.sts.provider;
 
+import javax.security.auth.callback.UnsupportedCallbackException;
+import org.apache.ws.security.WSPasswordCallback;
+import org.junit.Test;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import javax.security.auth.callback.UnsupportedCallbackException;
-
-import org.apache.ws.security.WSPasswordCallback;
-import org.junit.Test;
 
 public class ProviderPasswordCallbackTest {
 
@@ -47,7 +46,7 @@ public class ProviderPasswordCallbackTest {
     public void testProviderPasswordCallbackEmptyCallbackParameters() throws Exception  {
         ProviderPasswordCallback ppc = new ProviderPasswordCallback();
         try {
-            ppc.handle(new WSPasswordCallback[] { new WSPasswordCallback("", WSPasswordCallback.UNKNOWN) });
+            ppc.handle(new WSPasswordCallback [] {new WSPasswordCallback("", WSPasswordCallback.UNKNOWN) });
             fail("UnsupportedCallbackException should be thrown");
         } catch (UnsupportedCallbackException e) {
             // expected
