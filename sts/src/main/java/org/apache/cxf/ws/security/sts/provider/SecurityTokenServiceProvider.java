@@ -26,25 +26,22 @@ import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
-import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.util.JAXBSource;
 import javax.xml.namespace.QName;
 import javax.xml.soap.Detail;
 import javax.xml.soap.DetailEntry;
-import javax.xml.soap.MessageFactory;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPFactory;
 import javax.xml.soap.SOAPFault;
-import javax.xml.soap.SOAPMessage;
 import javax.xml.transform.Source;
-import javax.xml.transform.dom.DOMSource;
 import javax.xml.ws.Provider;
 import javax.xml.ws.Service;
 import javax.xml.ws.ServiceMode;
 import javax.xml.ws.WebServiceProvider;
 import javax.xml.ws.soap.SOAPFaultException;
-import org.w3c.dom.Node;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.cxf.ws.security.sts.provider.operation.CancelOperation;
@@ -53,6 +50,7 @@ import org.apache.cxf.ws.security.sts.provider.operation.KeyExchangeTokenOperati
 import org.apache.cxf.ws.security.sts.provider.operation.RenewOperation;
 import org.apache.cxf.ws.security.sts.provider.operation.RequestCollectionOperation;
 import org.apache.cxf.ws.security.sts.provider.operation.ValidateOperation;
+import org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseCollectionType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
 
@@ -83,7 +81,6 @@ public class SecurityTokenServiceProvider implements Provider<Source> {
 
     private static final String JAXB_CONTEXT_PATH = "org.oasis_open.docs.ws_sx.ws_trust._200512";
     private JAXBContext jaxbContext;
-    private MessageFactory factory;
     private SOAPFactory soapFactory;
     private CancelOperation cancelOperation;
     private IssueOperation issueOperation;
@@ -95,7 +92,6 @@ public class SecurityTokenServiceProvider implements Provider<Source> {
 
     public SecurityTokenServiceProvider() throws Exception {
         jaxbContext = JAXBContext.newInstance(JAXB_CONTEXT_PATH);
-        factory = MessageFactory.newInstance();
         soapFactory = SOAPFactory.newInstance();
     }
     
@@ -136,7 +132,7 @@ public class SecurityTokenServiceProvider implements Provider<Source> {
     
 
     public Source invoke(Source request) {
-        DOMSource response = new DOMSource();
+        Source response = null;
         try {
             RequestSecurityTokenType rst = convertToJAXBObject(request);
             Object operationImpl = null;
@@ -167,15 +163,16 @@ public class SecurityTokenServiceProvider implements Provider<Source> {
                     RequestSecurityTokenResponseCollectionType tokenResponse = 
                         (RequestSecurityTokenResponseCollectionType) methods[x]
                             .invoke(operationImpl, rst);
-                    Node responseNode = convertJAXBToNode(tokenResponse);
-                    response.setNode(responseNode);
-                    break;
+                    if (tokenResponse == null) {
+                        throw new Exception("Error in implementation class.");
+                    }
+                    
+                    response = new JAXBSource(jaxbContext, 
+                            new ObjectFactory().createRequestSecurityTokenResponseCollection(tokenResponse));
+                    return response;
                 }
             }
 
-            if (response.getNode() == null) {
-                throw new Exception("Error in implementation class.");
-            }
 
         } catch (Exception e) {
             LOG.error(e);
@@ -211,23 +208,6 @@ public class SecurityTokenServiceProvider implements Provider<Source> {
                 .unmarshal(source);
         request = (RequestSecurityTokenType) jaxbElement.getValue();
         return request;
-    }
-
-    private Node convertJAXBToNode(
-            RequestSecurityTokenResponseCollectionType response) throws Exception {
-        SOAPMessage soapResponse = null;
-        Marshaller marshaller = jaxbContext.createMarshaller();
-        soapResponse = factory.createMessage();
-
-        marshaller.marshal(
-                new JAXBElement<RequestSecurityTokenResponseCollectionType>(
-                        new QName("uri", "local"),
-                        RequestSecurityTokenResponseCollectionType.class,
-                        response), soapResponse.getSOAPPart());
-        Node msgNode = soapResponse.getSOAPPart().getFirstChild()
-                .getFirstChild();
-        
-        return msgNode;
     }
 
     public CancelOperation getCancelOperation() {
