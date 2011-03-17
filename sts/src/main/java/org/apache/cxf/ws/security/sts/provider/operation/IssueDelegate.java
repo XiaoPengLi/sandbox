@@ -277,7 +277,7 @@ public class IssueDelegate implements IssueOperation {
             } else {
                 Element elementNSImpl = (Element) useKeyType.getAny();
                 NodeList x509CertData = elementNSImpl
-                        .getElementsByTagName("ds:X509Certificate");
+                        .getElementsByTagNameNS("*", "X509Certificate");
                 if (x509CertData != null && x509CertData.getLength() > 0) {
                     x509 = Base64.decodeBase64(x509CertData.item(0)
                             .getTextContent().getBytes());
