@@ -70,13 +70,16 @@ public final class CertificateVerifier {
     
     public static PKIXCertPathBuilderResult verifyCertificate(
             X509Certificate cert, 
-            Set<X509Certificate> additionalCerts) throws CertificateVerificationException {
+            Set<X509Certificate> additionalCerts,
+            boolean verifySelfSignedCert) throws CertificateVerificationException {
         try {
             // Check for self-signed certificate
-            if (isSelfSigned(cert)) {
-                throw new CertificateVerificationException(
-                        "The certificate is self-signed.");
-            }
+        	if(!verifySelfSignedCert) {
+	            if (isSelfSigned(cert)) {
+	                throw new CertificateVerificationException(
+	                        "The certificate is self-signed.");
+	            }
+        	}
 
             // Prepare a set of trusted root CA certificates
             // and a set of intermediate certificates
@@ -92,7 +95,7 @@ public final class CertificateVerifier {
 
             // Attempt to build the certification chain and verify it
             PKIXCertPathBuilderResult verifiedCertChain = verifyCertificate(
-                    cert, trustedRootCerts, intermediateCerts);
+                    cert, trustedRootCerts, intermediateCerts, verifySelfSignedCert);
 
             // Check whether the certificate is revoked by the CRL
             // given in its CRL distribution point extension
@@ -152,7 +155,8 @@ public final class CertificateVerifier {
      */
     private static PKIXCertPathBuilderResult verifyCertificate(
             X509Certificate cert, Set<X509Certificate> trustedRootCerts,
-            Set<X509Certificate> intermediateCerts) throws GeneralSecurityException {
+            Set<X509Certificate> intermediateCerts,
+            boolean verifySelfSignedCert) throws GeneralSecurityException {
 
         // Create the selector that specifies the starting certificate
         X509CertSelector selector = new X509CertSelector();

@@ -19,16 +19,28 @@
 
 package org.apache.cxf.ws.security.sts.provider.cert;
 
+import java.util.List;
+
 public class CertificateVerifierConfig {
     private String storePath;
     private String storePwd;
 
-    private String keyCertAlias;
+    private List<String> trustCertAliases;
 
     private String keySignAlias;
     private String keySignPwd;
+    
+    private boolean verifySelfSignedCert;
 
-    public String getStorePath() {
+    public boolean isVerifySelfSignedCert() {
+		return verifySelfSignedCert;
+	}
+
+	public void setVerifySelfSignedCert(boolean verifySelfSignedCert) {
+		this.verifySelfSignedCert = verifySelfSignedCert;
+	}
+
+	public String getStorePath() {
         return storePath;
     }
 
@@ -44,15 +56,15 @@ public class CertificateVerifierConfig {
         this.storePwd = storePwd;
     }
 
-    public String getKeyCertAlias() {
-        return keyCertAlias;
-    }
+    public List<String> getTrustCertAliases() {
+		return trustCertAliases;
+	}
 
-    public void setKeyCertAlias(String keyCertAlias) {
-        this.keyCertAlias = keyCertAlias;
-    }
+	public void setTrustCertAliases(List<String> trustCertAliases) {
+		this.trustCertAliases = trustCertAliases;
+	}
 
-    public String getKeySignAlias() {
+	public String getKeySignAlias() {
         return keySignAlias;
     }
 

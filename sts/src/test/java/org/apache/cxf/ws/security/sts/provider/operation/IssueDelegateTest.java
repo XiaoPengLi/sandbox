@@ -25,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -63,11 +64,8 @@ public class IssueDelegateTest {
     ProviderPasswordCallback passwordCallbackMock = createMock(ProviderPasswordCallback.class); 
     private String storePath = "/sts.jks";
     private String storePwd = "atleast8";
-    private String keyCertAlias = "cacert";
     private String keySignAlias = "securitytokenserviceprovider";
     private String keySignPwd = "empty";
-
-    
     
     @Test
     public void testIssueDelegateNullParameter() {
@@ -87,7 +85,7 @@ public class IssueDelegateTest {
     public void testIssueDelegate() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -124,7 +122,7 @@ public class IssueDelegateTest {
     public void TestIssueDelegateWrongUsername() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -167,7 +165,7 @@ public class IssueDelegateTest {
     public void testIssueDelegateWrongPassword() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -211,7 +209,7 @@ public class IssueDelegateTest {
     public void testIssueDelegateWrongSignKey() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd("xxx");
         certificateVerifierConfig.setStorePath(storePath);
@@ -254,7 +252,7 @@ public class IssueDelegateTest {
     public void testIssueDelegateWrongSignAlias() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
         certificateVerifierConfig.setKeySignAlias("xxx");
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -326,7 +324,7 @@ public class IssueDelegateTest {
         IssueDelegate id = new IssueDelegate();
         assertNotNull(id);
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -380,7 +378,7 @@ public class IssueDelegateTest {
         IssueDelegate id = new IssueDelegate();
 
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -440,7 +438,7 @@ public class IssueDelegateTest {
         IssueDelegate id = new IssueDelegate();
 
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setKeyCertAlias(keyCertAlias);
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);

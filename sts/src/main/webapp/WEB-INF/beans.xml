@@ -76,7 +76,14 @@ http://www.springframework.org/schema/util http://www.springframework.org/schema
 		class="org.apache.cxf.ws.security.sts.provider.cert.CertificateVerifierConfig">
 		<property name="storePath" value="/sts.jks"/>
 		<property name="storePwd" value="atleast8"/>
-		<property name="keyCertAlias" value="cacert"/>
+		<!-- if false exception for self-signed cert will be thrown -->
+		<property name="verifySelfSignedCert" value="true"/>
+		<property name="trustCertAliases">
+			<list>
+				<value>cacert</value>
+				<value>clientcert</value>
+			</list>
+		</property>		
 		<property name="keySignAlias" value="securitytokenserviceprovider"/>
 		<property name="keySignPwd" value="empty"/>
 	</bean>

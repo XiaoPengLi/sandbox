@@ -201,13 +201,13 @@ public class IssueDelegate implements IssueOperation {
         ks.load(this.getClass().getResourceAsStream(
                 certificateVerifierConfig.getStorePath()),
                 certificateVerifierConfig.getStorePwd().toCharArray());
-        java.security.cert.Certificate stsCert = ks
-                .getCertificate(certificateVerifierConfig.getKeyCertAlias());
-
         Set<X509Certificate> trustedRootCerts = new HashSet<X509Certificate>();
-        trustedRootCerts.add((X509Certificate) stsCert);
-
-        CertificateVerifier.verifyCertificate(certificate, trustedRootCerts);
+        for(String alias : certificateVerifierConfig.getTrustCertAliases()) {
+        	java.security.cert.Certificate stsCert = ks.getCertificate(alias);
+        	trustedRootCerts.add((X509Certificate) stsCert);
+        }
+        
+        CertificateVerifier.verifyCertificate(certificate, trustedRootCerts, certificateVerifierConfig.isVerifySelfSignedCert());
     }
 
     private RequestSecurityTokenResponseType wrapAssertionToResponse(
