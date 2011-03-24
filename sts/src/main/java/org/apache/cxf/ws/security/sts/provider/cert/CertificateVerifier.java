@@ -63,23 +63,22 @@ public final class CertificateVerifier {
      *             path cannot be built or some certificate in the chain is
      *             expired or CRL checks are failed)
      */
-    
+
     private CertificateVerifier() {
-        
+
     }
-    
+
     public static PKIXCertPathBuilderResult verifyCertificate(
-            X509Certificate cert, 
-            Set<X509Certificate> additionalCerts,
+            X509Certificate cert, Set<X509Certificate> additionalCerts,
             boolean verifySelfSignedCert) throws CertificateVerificationException {
         try {
             // Check for self-signed certificate
-        	if(!verifySelfSignedCert) {
-	            if (isSelfSigned(cert)) {
-	                throw new CertificateVerificationException(
-	                        "The certificate is self-signed.");
-	            }
-        	}
+            if (!verifySelfSignedCert) {
+                if (isSelfSigned(cert)) {
+                    throw new CertificateVerificationException(
+                            "The certificate is self-signed.");
+                }
+            }
 
             // Prepare a set of trusted root CA certificates
             // and a set of intermediate certificates
@@ -95,7 +94,8 @@ public final class CertificateVerifier {
 
             // Attempt to build the certification chain and verify it
             PKIXCertPathBuilderResult verifiedCertChain = verifyCertificate(
-                    cert, trustedRootCerts, intermediateCerts, verifySelfSignedCert);
+                    cert, trustedRootCerts, intermediateCerts,
+                    verifySelfSignedCert);
 
             // Check whether the certificate is revoked by the CRL
             // given in its CRL distribution point extension
@@ -120,8 +120,7 @@ public final class CertificateVerifier {
      * Checks whether given X.509 certificate is self-signed.
      */
     public static boolean isSelfSigned(X509Certificate cert) throws CertificateException, 
-    NoSuchAlgorithmException,
-            NoSuchProviderException {
+    NoSuchAlgorithmException, NoSuchProviderException {
         try {
             // Try to verify certificate signature with its own public key
             PublicKey key = cert.getPublicKey();

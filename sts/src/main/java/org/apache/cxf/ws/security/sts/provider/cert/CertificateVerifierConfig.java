@@ -29,18 +29,18 @@ public class CertificateVerifierConfig {
 
     private String keySignAlias;
     private String keySignPwd;
-    
+
     private boolean verifySelfSignedCert;
 
     public boolean isVerifySelfSignedCert() {
-		return verifySelfSignedCert;
-	}
+        return verifySelfSignedCert;
+    }
 
-	public void setVerifySelfSignedCert(boolean verifySelfSignedCert) {
-		this.verifySelfSignedCert = verifySelfSignedCert;
-	}
+    public void setVerifySelfSignedCert(boolean verifySelfSignedCert) {
+        this.verifySelfSignedCert = verifySelfSignedCert;
+    }
 
-	public String getStorePath() {
+    public String getStorePath() {
         return storePath;
     }
 
@@ -57,14 +57,14 @@ public class CertificateVerifierConfig {
     }
 
     public List<String> getTrustCertAliases() {
-		return trustCertAliases;
-	}
+        return trustCertAliases;
+    }
 
-	public void setTrustCertAliases(List<String> trustCertAliases) {
-		this.trustCertAliases = trustCertAliases;
-	}
+    public void setTrustCertAliases(List<String> trustCertAliases) {
+        this.trustCertAliases = trustCertAliases;
+    }
 
-	public String getKeySignAlias() {
+    public String getKeySignAlias() {
         return keySignAlias;
     }
 

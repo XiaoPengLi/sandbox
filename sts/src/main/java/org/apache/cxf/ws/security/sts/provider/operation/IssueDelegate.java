@@ -67,6 +67,7 @@ import org.apache.cxf.ws.security.sts.provider.STSException;
 import org.apache.cxf.ws.security.sts.provider.cert.CertificateVerifier;
 import org.apache.cxf.ws.security.sts.provider.cert.CertificateVerifierConfig;
 import org.apache.cxf.ws.security.sts.provider.token.TokenProvider;
+import org.apache.xml.security.utils.Constants;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseCollectionType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenResponseType;
 import org.oasis_open.docs.ws_sx.ws_trust._200512.RequestSecurityTokenType;
@@ -79,17 +80,13 @@ import org.opensaml.common.xml.SAMLConstants;
 import org.w3._2000._09.xmldsig.KeyInfoType;
 import org.w3._2000._09.xmldsig.X509DataType;
 
-
 public class IssueDelegate implements IssueOperation {
 
     private static final Log LOG = LogFactory.getLog(IssueDelegate.class
             .getName());
 
-    private static final org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory WS_TRUST_FACTORY = new 
-    org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory();
-    private static final 
-    org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.ObjectFactory WSSE_FACTORY = new 
-    org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.ObjectFactory();
+    private static final org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory WS_TRUST_FACTORY = new org.oasis_open.docs.ws_sx.ws_trust._200512.ObjectFactory();
+    private static final org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.ObjectFactory WSSE_FACTORY = new org.oasis_open.docs.wss._2004._01.oasis_200401_wss_wssecurity_secext_1_0.ObjectFactory();
 
     private static final String SIGN_FACTORY_TYPE = "DOM";
     private static final String JKS_INSTANCE = "JKS";
@@ -202,12 +199,13 @@ public class IssueDelegate implements IssueOperation {
                 certificateVerifierConfig.getStorePath()),
                 certificateVerifierConfig.getStorePwd().toCharArray());
         Set<X509Certificate> trustedRootCerts = new HashSet<X509Certificate>();
-        for(String alias : certificateVerifierConfig.getTrustCertAliases()) {
-        	java.security.cert.Certificate stsCert = ks.getCertificate(alias);
-        	trustedRootCerts.add((X509Certificate) stsCert);
+        for (String alias : certificateVerifierConfig.getTrustCertAliases()) {
+            java.security.cert.Certificate stsCert = ks.getCertificate(alias);
+            trustedRootCerts.add((X509Certificate) stsCert);
         }
-        
-        CertificateVerifier.verifyCertificate(certificate, trustedRootCerts, certificateVerifierConfig.isVerifySelfSignedCert());
+
+        CertificateVerifier.verifyCertificate(certificate, trustedRootCerts,
+                certificateVerifierConfig.isVerifySelfSignedCert());
     }
 
     private RequestSecurityTokenResponseType wrapAssertionToResponse(
@@ -276,8 +274,8 @@ public class IssueDelegate implements IssueOperation {
                 }
             } else {
                 Element elementNSImpl = (Element) useKeyType.getAny();
-                NodeList x509CertData = elementNSImpl
-                        .getElementsByTagNameNS("*", "X509Certificate");
+                NodeList x509CertData = elementNSImpl.getElementsByTagNameNS(
+                       Constants.SignatureSpecNS, Constants._TAG_X509CERTIFICATE);
                 if (x509CertData != null && x509CertData.getLength() > 0) {
                     x509 = Base64.decodeBase64(x509CertData.item(0)
                             .getTextContent().getBytes());
@@ -348,38 +346,7 @@ public class IssueDelegate implements IssueOperation {
 
         signXML(assertionDocument, tokenId, keyStoreInfo);
 
-        // shiftSignatureElementInSaml(assertion);
     }
-
-    // private void shiftSignatureElementInSaml(Element target) {
-    // NodeList nl = target.getElementsByTagNameNS(XMLSignature.XMLNS,
-    // "Signature");
-    // if (nl.getLength() == 0) {
-    // return;
-    // }
-    // Element signatureElement = (Element) nl.item(0);
-    //
-    // boolean foundIssuer = false;
-    // Node elementAfterIssuer = null;
-    // NodeList children = target.getChildNodes();
-    // for (int i = 0; i < children.getLength(); i++) {
-    // Node child = children.item(i);
-    // if (foundIssuer) {
-    // elementAfterIssuer = child;
-    // break;
-    // }
-    // if (child.getNodeType() == Node.ELEMENT_NODE
-    // && child.getLocalName().equals("Issuer"))
-    // foundIssuer = true;
-    // }
-    //
-    // // Place after the Issuer, or as first element if no Issuer:
-    // if (!foundIssuer || elementAfterIssuer != null) {
-    // target.removeChild(signatureElement);
-    // target.insertBefore(signatureElement,
-    // foundIssuer ? elementAfterIssuer : target.getFirstChild());
-    // }
-    // }
 
     private void signXML(Element target, String refId, KeyStoreInfo keyStoreInfo) {
 
@@ -389,19 +356,19 @@ public class IssueDelegate implements IssueOperation {
                 .getInstance(SIGN_FACTORY_TYPE);
         try {
             DigestMethod method = signFactory.newDigestMethod(
-                    "http://www.w3.org/2000/09/xmldsig#sha1", null);
+                    DigestMethod.SHA1, null);
             Transform transform = signFactory.newTransform(
-                    "http://www.w3.org/2000/09/xmldsig#enveloped-signature",
+                    Transform.ENVELOPED,
                     (TransformParameterSpec) null);
             Reference ref = signFactory.newReference('#' + refId, method,
                     Collections.singletonList(transform), null, null);
 
             CanonicalizationMethod canonMethod = signFactory
                     .newCanonicalizationMethod(
-                            "http://www.w3.org/2001/10/xml-exc-c14n#",
+                            CanonicalizationMethod.EXCLUSIVE,
                             (C14NMethodParameterSpec) null);
             SignatureMethod signMethod = signFactory.newSignatureMethod(
-                    "http://www.w3.org/2000/09/xmldsig#rsa-sha1", null);
+                    SignatureMethod.RSA_SHA1, null);
             SignedInfo si = signFactory.newSignedInfo(canonMethod, signMethod,
                     Collections.singletonList(ref));
 
