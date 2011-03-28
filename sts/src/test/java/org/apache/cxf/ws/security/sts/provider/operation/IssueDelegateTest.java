@@ -58,14 +58,15 @@ public class IssueDelegateTest {
     
 
     private static final String CERT_DATA = 
-        "MIICsjCCAhsCBRI0VniSMA0GCSqGSIb3DQEBBQUAMIGjMQswCQYDVQQGEwJVQTEQMA4GA1UECAwHTHVnYW5zazEQMA4GA1UEBwwHTHVnYW5zazESMBAGA1UECgwJSW5mb3B1bHNlMRMwEQYDVQQLDApUYWxlbmRUZWFtMRkwFwYDVQQDDBBQYXZlbFZhc2lsY2hlbmtvMSwwKgYJKoZIhvcNAQkBFh1QYXZlbC5TLlZhc2lsY2hlbmtvQGdtYWlsLmNvbTAeFw0xMTAyMjMxMjA4NDVaFw0yMTAyMjAxMjA4NDVaMIGaMRowGAYDVQQDExFUYWxlbmRDZXJ0aWZpY2F0ZTEPMA0GA1UECxMGVGFsZW5kMQ8wDQYDVQQKEwZUYWxlbmQxEzARBgNVBAcTCkN1c3RvbUNpdHkxFDASBgNVBAgTC0N1c3RvbVN0YXRlMQswCQYDVQQGEwJERTEiMCAGCSqGSIb3DQEJARYTZXhhbXBsZUBleGFtcGxlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAqD49IHig6rd9p5NTF0YzI+XMlUZThG5Us1DdcOUpPTp2i5m3wukWlRXFd4BZcp+PClbvyuNr/8kF0rDcxejvqMZrloQ1h4ncJvSW9udULh+M53vynuhSTDQWVWIOPxbREInNkx1kTm/uqhWf8JtewW6maH3Pz4Ll6Hcj8KWsnIUCAwEAATANBgkqhkiG9w0BAQUFAAOBgQB+EALhJN+LKDtTLSpgA3osgXmyV7UfKujTH/RQwGkMyM8KBzhaXvLgfLrcNrVFNzvv/BcWs2vxc15r0RmkAaSkpZig0scWR98mUW466xoh3cbbt4Dj7hmiinvyBingVdn3Z2IjRzfW2aACsMgk8e5kyhHdRY8OMucKxrDaQn0amg==";
+        //"MIICsjCCAhsCBRI0VniSMA0GCSqGSIb3DQEBBQUAMIGjMQswCQYDVQQGEwJVQTEQMA4GA1UECAwHTHVnYW5zazEQMA4GA1UEBwwHTHVnYW5zazESMBAGA1UECgwJSW5mb3B1bHNlMRMwEQYDVQQLDApUYWxlbmRUZWFtMRkwFwYDVQQDDBBQYXZlbFZhc2lsY2hlbmtvMSwwKgYJKoZIhvcNAQkBFh1QYXZlbC5TLlZhc2lsY2hlbmtvQGdtYWlsLmNvbTAeFw0xMTAyMjMxMjA4NDVaFw0yMTAyMjAxMjA4NDVaMIGaMRowGAYDVQQDExFUYWxlbmRDZXJ0aWZpY2F0ZTEPMA0GA1UECxMGVGFsZW5kMQ8wDQYDVQQKEwZUYWxlbmQxEzARBgNVBAcTCkN1c3RvbUNpdHkxFDASBgNVBAgTC0N1c3RvbVN0YXRlMQswCQYDVQQGEwJERTEiMCAGCSqGSIb3DQEJARYTZXhhbXBsZUBleGFtcGxlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAqD49IHig6rd9p5NTF0YzI+XMlUZThG5Us1DdcOUpPTp2i5m3wukWlRXFd4BZcp+PClbvyuNr/8kF0rDcxejvqMZrloQ1h4ncJvSW9udULh+M53vynuhSTDQWVWIOPxbREInNkx1kTm/uqhWf8JtewW6maH3Pz4Ll6Hcj8KWsnIUCAwEAATANBgkqhkiG9w0BAQUFAAOBgQB+EALhJN+LKDtTLSpgA3osgXmyV7UfKujTH/RQwGkMyM8KBzhaXvLgfLrcNrVFNzvv/BcWs2vxc15r0RmkAaSkpZig0scWR98mUW466xoh3cbbt4Dj7hmiinvyBingVdn3Z2IjRzfW2aACsMgk8e5kyhHdRY8OMucKxrDaQn0amg==";
+    	"MIIEFjCCA3+gAwIBAgIJAJORWX2Xsa8DMA0GCSqGSIb3DQEBBQUAMIG5MQswCQYDVQQGEwJVUzERMA8GA1UECBMITmV3IFlvcmsxFjAUBgNVBAcTDU5pYWdhcmEgRmFsbHMxLDAqBgNVBAoTI1NhbXBsZSBDbGllbnQgLS0gTk9UIEZPUiBQUk9EVUNUSU9OMRYwFAYDVQQLEw1JVCBEZXBhcnRtZW50MRcwFQYDVQQDEw53d3cuY2xpZW50LmNvbTEgMB4GCSqGSIb3DQEJARYRY2xpZW50QGNsaWVudC5jb20wHhcNMTEwMjA5MTgzMDI3WhcNMjEwMjA2MTgzMDI3WjCBuTELMAkGA1UEBhMCVVMxETAPBgNVBAgTCE5ldyBZb3JrMRYwFAYDVQQHEw1OaWFnYXJhIEZhbGxzMSwwKgYDVQQKEyNTYW1wbGUgQ2xpZW50IC0tIE5PVCBGT1IgUFJPRFVDVElPTjEWMBQGA1UECxMNSVQgRGVwYXJ0bWVudDEXMBUGA1UEAxMOd3d3LmNsaWVudC5jb20xIDAeBgkqhkiG9w0BCQEWEWNsaWVudEBjbGllbnQuY29tMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDauFNVqi4B2+u/PC9ktDkn82bglEQYcL4o5JRUhQVEhTK2iEloz1Rvo/qyfDhBPc1lzIUn4ams+DKBSSjZMCgop3XbeCXzIVP784ruC8HF5QrYsXUQfTc7lzqafXZXH8Bk89gSScA1fFme6TpvYzM0zjBETSXADtKOs9oKB2VOIwIDAQABo4IBIjCCAR4wHQYDVR0OBBYEFFIz+0BSZlLtXkA/udRjRgphtREuMIHuBgNVHSMEgeYwgeOAFFIz+0BSZlLtXkA/udRjRgphtREuoYG/pIG8MIG5MQswCQYDVQQGEwJVUzERMA8GA1UECBMITmV3IFlvcmsxFjAUBgNVBAcTDU5pYWdhcmEgRmFsbHMxLDAqBgNVBAoTI1NhbXBsZSBDbGllbnQgLS0gTk9UIEZPUiBQUk9EVUNUSU9OMRYwFAYDVQQLEw1JVCBEZXBhcnRtZW50MRcwFQYDVQQDEw53d3cuY2xpZW50LmNvbTEgMB4GCSqGSIb3DQEJARYRY2xpZW50QGNsaWVudC5jb22CCQCTkVl9l7GvAzAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBBQUAA4GBAEjEr9QfaYsZf7ELnqB++OkWcKxpMt1Yj/VOyL99AekkVTM+rRHCU9Bu+tncMNsfy8mIXUC1JqKQ+Cq5RlaDh/ujzt6i17G7uSGd6U1U/DPZBqTm3Dxwl1cMAGU/CoAKTWE+o+fS4Q2xHv7L1KiXQQc9EWJ4C34Ik45fB6g3DiTj";
     RequestSecurityTokenType requestMock = createMock(RequestSecurityTokenType.class);
 
     ProviderPasswordCallback passwordCallbackMock = createMock(ProviderPasswordCallback.class); 
-    private String storePath = "/sts.jks";
-    private String storePwd = "atleast8";
-    private String keySignAlias = "securitytokenserviceprovider";
-    private String keySignPwd = "empty";
+    private String storePath = "/stsstore.jks";
+    private String storePwd = "stsspass";
+    private String keySignAlias = "mystskey";
+    private String keySignPwd = "stskpass";
     
     @Test
     public void testIssueDelegateNullParameter() {
@@ -85,7 +86,7 @@ public class IssueDelegateTest {
     public void testIssueDelegate() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("myclientkey"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -122,7 +123,7 @@ public class IssueDelegateTest {
     public void TestIssueDelegateWrongUsername() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("myclientkey"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -165,7 +166,7 @@ public class IssueDelegateTest {
     public void testIssueDelegateWrongPassword() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("myclientkey"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -209,7 +210,7 @@ public class IssueDelegateTest {
     public void testIssueDelegateWrongSignKey() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("myclientkey"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd("xxx");
         certificateVerifierConfig.setStorePath(storePath);
@@ -252,7 +253,7 @@ public class IssueDelegateTest {
     public void testIssueDelegateWrongSignAlias() {
         IssueDelegate id = new IssueDelegate();
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("myclientkey"));
         certificateVerifierConfig.setKeySignAlias("xxx");
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -324,11 +325,12 @@ public class IssueDelegateTest {
         IssueDelegate id = new IssueDelegate();
         assertNotNull(id);
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("myclientkey"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
         certificateVerifierConfig.setStorePwd(storePwd);
+        certificateVerifierConfig.setVerifySelfSignedCert(true);
         id.setCertificateVerifierConfig(certificateVerifierConfig);
         JAXBElement<byte[]> jX509Certificate = new JAXBElement<byte[]>(
                 QName.valueOf("X509Certificate"), byte[].class,
@@ -378,7 +380,7 @@ public class IssueDelegateTest {
         IssueDelegate id = new IssueDelegate();
 
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("myclientkey"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);
@@ -438,7 +440,7 @@ public class IssueDelegateTest {
         IssueDelegate id = new IssueDelegate();
 
         CertificateVerifierConfig certificateVerifierConfig = new CertificateVerifierConfig();
-        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("cacert"));
+        certificateVerifierConfig.setTrustCertAliases(Arrays.asList("myclientkey"));
         certificateVerifierConfig.setKeySignAlias(keySignAlias);
         certificateVerifierConfig.setKeySignPwd(keySignPwd);
         certificateVerifierConfig.setStorePath(storePath);

@@ -74,17 +74,16 @@ http://www.springframework.org/schema/util http://www.springframework.org/schema
 		class="org.apache.cxf.ws.security.sts.provider.token.Saml2TokenProvider"/>
 	<bean id="certificateVerifierConfig"
 		class="org.apache.cxf.ws.security.sts.provider.cert.CertificateVerifierConfig">
-		<property name="storePath" value="/sts.jks"/>
-		<property name="storePwd" value="atleast8"/>
+		<property name="storePath" value="/stsstore.jks"/>
+		<property name="storePwd" value="stsspass"/>
 		<!-- if false exception for self-signed cert will be thrown -->
 		<property name="verifySelfSignedCert" value="true"/>
 		<property name="trustCertAliases">
 			<list>
-				<value>cacert</value>
-				<value>clientcert</value>
+				<value>myclientkey</value>
 			</list>
 		</property>		
-		<property name="keySignAlias" value="securitytokenserviceprovider"/>
-		<property name="keySignPwd" value="empty"/>
+		<property name="keySignAlias" value="mystskey"/>
+		<property name="keySignPwd" value="stskpass"/>
 	</bean>
 </beans>

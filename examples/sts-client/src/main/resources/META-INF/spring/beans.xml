@@ -90,8 +90,8 @@
 	
 	<bean id="tokenType" class="java.lang.String">
 		<constructor-arg type="java.lang.String">
-			<value>urn:oasis:names:tc:SAML:1.0:assertion</value>
-			<!--<value>urn:oasis:names:tc:SAML:2.0:assertion</value>-->
+			<!--<value>urn:oasis:names:tc:SAML:1.0:assertion</value>-->
+			<value>urn:oasis:names:tc:SAML:2.0:assertion</value>
 		</constructor-arg>
 	</bean>
 
