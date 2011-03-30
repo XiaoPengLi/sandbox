@@ -20,6 +20,7 @@ import routines.TalendDataGenerator;
 import routines.TalendDate;
 import routines.TalendString;
 import routines.system.*;
+import routines.system.esb.MessageHandler;
 import routines.system.esb.TEsbException;
 import routines.system.esb.TalendEsbProviderJob;
 
@@ -36,8 +37,6 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
 import java.util.Comparator;
-
-import org.dom4j.DocumentException;
 
 //the import part of tJavaFlex_2
 //import java.util.List;
@@ -1716,7 +1715,8 @@ public class TestProviderJobD implements TalendEsbProviderJob {
 			/**
 			 * queued message exchange
 			 */
-			class QueuedExchangeContextImpl<T> {
+			class QueuedExchangeContextImpl<T>
+					implements routines.system.esb.ExchangeContext<T> {
 
 				/**
 				 * Exchange timeout in seconds
@@ -1831,7 +1831,8 @@ public class TestProviderJobD implements TalendEsbProviderJob {
 			/**
 			 * message exchange controller
 			 */
-			class QueuedMessageHandlerImpl<T> {
+			class QueuedMessageHandlerImpl<T>
+					implements routines.system.esb.MessageHandler<T> {
 				private final int MAX_QUEUE_SIZE = 1000;
 
 				private final int WAIT_TIMEOUT_SECONDS = 120;
@@ -2588,6 +2589,15 @@ public class TestProviderJobD implements TalendEsbProviderJob {
 							org.dom4j.Document requestMessage_tESBProviderRequest_1 = messagesExchange_tESBProviderRequest_1
 									.getInputMessage();
 
+if (null == requestMessage_tESBProviderRequest_1) {
+	if (forceStopKeepListening) {
+		break;
+	}
+}
+
+
+
+
 							Document talendDocument_tESBProviderRequest_1 = new Document();
 							talendDocument_tESBProviderRequest_1
 									.setDocument(requestMessage_tESBProviderRequest_1);
@@ -3178,7 +3188,7 @@ public class TestProviderJobD implements TalendEsbProviderJob {
 							// "Keep listening"
 							// parameter to false. Then we will have a break
 							// before.
-							if ("false".equals("true")) {
+							if ("false".equals("true") || forceStopKeepListening) {
 								break;
 							}
 						}
@@ -3514,147 +3524,12 @@ public class TestProviderJobD implements TalendEsbProviderJob {
 
 	public String status = "";
 
-	public static void main(String[] args) throws Exception {
-		final TestProviderJobD TestProviderJobDClass = new TestProviderJobD();
-
-		int exitCode = TestProviderJobDClass.runJobInESB(args);
-		System.out.println();
-
-		org.dom4j.Document request = org.dom4j.DocumentHelper.parseText("<input>world</input>");
-		System.out.println("@@@ in1: " + request.asXML());
-		org.dom4j.Document response = TestProviderJobDClass.invoke(request);
-		System.out.println("@@@ out1: " + response.asXML());
-		System.out.println();
-
-		org.dom4j.Document request2 = org.dom4j.DocumentHelper.parseText("<input></input>");
-		System.out.println("@@@ in2: " + request2.asXML());
-		try {
-			org.dom4j.Document response2 = TestProviderJobDClass.invoke(request2);
-			System.out.println("@@@ out2: " + response2.asXML());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		System.out.println();
-
-		org.dom4j.Document request3 = org.dom4j.DocumentHelper.parseText("<input>xxx</input>");
-		System.out.println("@@@ in3: " + request3.asXML());
-		try {
-			org.dom4j.Document response3 = TestProviderJobDClass.invoke(request3);
-			System.out.println("@@@ out3: " + response3.asXML());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		System.out.println();
-
-		System.exit(exitCode);
-	}
-
-	public static void mainOrg(String[] args) {
+	public static void main(String[] args) {
 		final TestProviderJobD TestProviderJobDClass = new TestProviderJobD();
 
 		int exitCode = TestProviderJobDClass.runJobInTOS(args);
 
 		System.exit(exitCode);
-	}
-
-	public org.dom4j.Document invokeAndDie(org.dom4j.Document request)
-			throws TEsbException {
-		stopExposingProviderJob();
-		runJobInTOS(new String[] {});
-		return invoke(request);
-	}
-	public org.dom4j.Document invoke(org.dom4j.Document request)
-			throws TEsbException {
-		if (!runInEsb) {
-			throw new TEsbException("invoke method is for run in ESB only" +
-					" - use runJobInESB() method instead runJobInTOS before");
-		}
-
-		// System.out.println(System.currentTimeMillis() + " -> handleMessage");
-		try {
-			// System.out.println("request: " + request.asXML());
-
-			@SuppressWarnings("unchecked")
-			QueuedMessageHandlerImpl<org.dom4j.Document> handler =
-				(QueuedMessageHandlerImpl<org.dom4j.Document>) globalMap.get("esbHandler");
-
-			QueuedExchangeContextImpl<org.dom4j.Document> messageExchange =
-				handler.invoke(request);
-
-			try {
-				if (messageExchange.isFault()) {
-					String faultString = messageExchange.getFaultMessage();
-					// System.out.println("fault: " + faultString);
-
-					if (messageExchange.isBusinessFault()) {
-						org.dom4j.Document faultDoc = messageExchange.getBusinessFaultDetails();
-						throw new TEsbException(faultString, faultDoc);
-					} else {
-						Throwable error = messageExchange.getFault();
-						// System.out.println("job error: " + error.getMessage());
-						throw new TEsbException(faultString + ": " + error.getMessage());
-//						if (error instanceof RuntimeException) {
-//							throw (RuntimeException) error;
-//						} else {
-//							throw new RuntimeException(faultString, error);
-//						}
-					}
-				} else {
-					org.dom4j.Document responseDoc = messageExchange.getResponse();
-					// System.out.println("response: " + responseDoc.asXML());
-
-					return responseDoc;
-				}
-			} finally {
-				messageExchange.completeQueuedProcessing();
-			}
-
-		} catch (TEsbException ex) {
-			throw ex;
-		} catch (RuntimeException ex) {
-			throw ex;
-		} catch (Throwable ex) {
-			ex.printStackTrace();
-			throw new RuntimeException(ex);
-		} finally {
-			// System.out.println(System.currentTimeMillis() + " <- handleMessage");
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	public QueuedMessageHandlerImpl<org.dom4j.Document> getMessageHandler() {
-		return (QueuedMessageHandlerImpl<org.dom4j.Document>) globalMap.get("esbHandler");
-	}
-
-	public void stopExposingProviderJob() {
-		// TODO:
-	}
-
-	private boolean runInEsb = false;
-
-	public int runJobInESB(final String[] args) {
-
-		runInEsb = true;
-
-		final TalendJob thisJob = this;
-
-		Thread jobRunner = new Thread() {
-
-			public void run() {
-				thisJob.runJobInTOS(args);
-			}
-		};
-
-		jobRunner.start();
-
-//		Thread.currentThread();
-//		try {
-//			Thread.sleep(1500);
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-
-		return 0; // runJobInTOS(args);
 	}
 
 	public String[][] runJob(String[] args) {
@@ -3869,133 +3744,24 @@ public class TestProviderJobD implements TalendEsbProviderJob {
 	}
 
 	ResumeUtil resumeUtil = null;
+
+
+
+	// NEW
+	@SuppressWarnings("unchecked")
+	public MessageHandler<org.dom4j.Document> getInvoker() {
+		return (QueuedMessageHandlerImpl<org.dom4j.Document>) globalMap.get("esbHandler");
+	}
+
+	public void stopExposingProviderJob() {
+		forceStopKeepListening = true;
+	}
+
+	public boolean runInEsb = false;
+	public boolean forceStopKeepListening = false;
+
 }
 /************************************************************************************************
  * 97825 characters generated by Talend Open Studio on the February 24, 2011
  * 3:06:16 PM EET
  ************************************************************************************************/
-
-		/**
-		 * web service provider implementation 2
-		 */
-/*
-		@javax.jws.WebService(name = "TalendJobAsWebService", targetNamespace = "http://talend.org/esb/service/job")
-		@javax.jws.soap.SOAPBinding(parameterStyle = javax.jws.soap.SOAPBinding.ParameterStyle.BARE)
-		@javax.xml.ws.ServiceMode(value = javax.xml.ws.Service.Mode.MESSAGE)
-		@javax.xml.ws.WebServiceProvider()
-		class ESBProvider2_tESBProviderRequest_1 implements javax.xml.ws.Provider<javax.xml.soap.SOAPMessage> {
-
-			private QueuedMessageHandlerImpl<org.dom4j.Document> messageHandler;
-
-			private final String TNS = ESBProvider2_tESBProviderRequest_1.class
-					.getAnnotation(javax.jws.WebService.class).targetNamespace();
-
-		//	private javax.xml.soap.MessageFactory factory;
-
-			public ESBProvider2_tESBProviderRequest_1(
-					QueuedMessageHandlerImpl<org.dom4j.Document> messageHandler) {
-				this.messageHandler = messageHandler;
-		//		try {
-		//			factory = javax.xml.soap.MessageFactory.newInstance();
-		//		} catch (SOAPException e) {
-		//			throw new RuntimeException("cannot create soap message factory");
-		//		}
-			}
-
-			@javax.jws.WebMethod(operationName = "invoke", action = "http://talend.org/esb/service/job/invoke")
-			@javax.jws.WebResult(name = "jobOutput", targetNamespace = "http://talend.org/esb/service/job",
-					// targetNamespace = "",
-					partName = "response")
-					public javax.xml.soap.SOAPMessage invoke(
-							@javax.jws.WebParam(name = "jobInput", targetNamespace = "http://talend.org/esb/service/job",
-									// targetNamespace = "",
-									partName = "request") javax.xml.soap.SOAPMessage request) {
-
-				System.out.println(System.currentTimeMillis() + " -> handleMessage");
-
-				try {
-					org.w3c.dom.Document payload = request.getSOAPBody().extractContentAsDocument();
-
-					org.dom4j.io.DOMReader reader = new org.dom4j.io.DOMReader();
-					org.dom4j.Document requestDoc = reader.read(payload);
-					System.out.println("request: " + requestDoc.asXML());
-
-					QueuedExchangeContextImpl<org.dom4j.Document> messageExchange =
-						messageHandler.invoke(requestDoc);
-
-					try {
-						if (messageExchange.isFault()) {
-							String faultString = messageExchange.getFaultMessage();
-							System.out.println("fault: " + faultString);
-
-							if (messageExchange.isBusinessFault()) {
-								org.dom4j.Document faultDoc = messageExchange.getBusinessFaultDetails();
-
-								javax.xml.soap.SOAPMessage response = newMessage();
-								javax.xml.soap.SOAPFault fault = response.getSOAPBody().addFault();
-								fault.setFaultCode(
-										response.getSOAPPart().getEnvelope().createName(
-												"businessFault", null, TNS));
-								fault.setFaultString(faultString);
-								if (null != faultDoc) {
-									System.out.println("fault details: " + faultDoc.asXML());
-
-									org.dom4j.io.DOMWriter writer = new org.dom4j.io.DOMWriter();
-									org.w3c.dom.Document faultDocDom = writer.write(faultDoc);
-
-									setContent(fault.addDetail(), faultDocDom);
-								}
-								response.saveChanges();
-								return response;
-							} else {
-								Throwable error = messageExchange.getFault();
-								System.out.println("job error: " + error.getMessage());
-								if (error instanceof RuntimeException) {
-									throw (RuntimeException) error;
-								} else {
-									throw new RuntimeException(faultString, error);
-								}
-							}
-						} else {
-							org.dom4j.Document responseDoc = messageExchange.getResponse();
-							System.out.println("response: " + responseDoc.asXML());
-
-							org.dom4j.io.DOMWriter writer = new org.dom4j.io.DOMWriter();
-							org.w3c.dom.Document responseDocDom = writer.write(responseDoc);
-
-							javax.xml.soap.SOAPMessage response = newMessage();
-							setContent(response.getSOAPBody(), responseDocDom);
-							response.saveChanges();
-							return response;
-						}
-					} finally {
-						messageExchange.completeQueuedProcessing();
-					}
-
-				} catch (RuntimeException ex) {
-					throw ex;
-				} catch (Throwable ex) {
-					ex.printStackTrace();
-					throw new RuntimeException(ex);
-				} finally {
-					System.out.println(System.currentTimeMillis()
-							+ " <- handleMessage");
-				}
-			}
-
-			private javax.xml.soap.SOAPMessage newMessage() throws javax.xml.soap.SOAPException {
-				javax.xml.soap.MessageFactory factory = javax.xml.soap.MessageFactory.newInstance();
-				javax.xml.soap.SOAPMessage soapMessage = factory.createMessage();
-				soapMessage.setProperty(javax.xml.soap.SOAPMessage.CHARACTER_SET_ENCODING, "UTF-8");
-				soapMessage.setProperty(javax.xml.soap.SOAPMessage.WRITE_XML_DECLARATION, "false");
-				return soapMessage;
-			}
-
-			private void setContent(javax.xml.soap.SOAPElement soapElement,
-					org.w3c.dom.Document content) throws Exception {
-				soapElement.appendChild(
-						soapElement.getOwnerDocument().importNode(
-								content.getDocumentElement(), true));
-			}
-		}
-*/

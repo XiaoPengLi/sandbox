@@ -5,13 +5,9 @@
 // ============================================================================
 package routines.system.esb;
 
-import routines.system.TalendJob;
+public interface TalendEsbProviderJob extends routines.system.TalendJob {
 
-public interface TalendEsbProviderJob extends TalendJob {
-
-	org.dom4j.Document invoke(org.dom4j.Document request) throws TEsbException;
-
-	org.dom4j.Document invokeAndDie(org.dom4j.Document request) throws TEsbException;
+	MessageHandler<org.dom4j.Document> getInvoker();
 
 	void stopExposingProviderJob();
 }

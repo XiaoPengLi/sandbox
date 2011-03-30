@@ -5,8 +5,6 @@
 // ============================================================================
 package routines.system.esb;
 
-import routines.system.TalendJob;
-
-public interface TalendEsbConsumerJob extends TalendJob {
+public interface TalendEsbConsumerJob extends routines.system.TalendJob {
 
 }
