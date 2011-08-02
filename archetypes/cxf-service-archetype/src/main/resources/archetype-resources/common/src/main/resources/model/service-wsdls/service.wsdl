@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+ Copyright (c) 2011 Talend Inc. - www.talend.com
+ All rights reserved.
+
+ This program and the accompanying materials are made available
+ under the terms of the Apache License v2.0
+ which accompanies this distribution, and is available at
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ -->
+<definitions targetNamespace="http://services.talend.org/cxf-service"
+  xmlns="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:stypes="http://services.talend.org/service/types"
+  xmlns:jms="http://schemas.xmlsoap.org/wsdl/jms/"
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+  xmlns:tns="http://services.talend.org/cxf-service"
+  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <types>
+    <xsd:schema elementFormDefault="unqualified"
+      targetNamespace="http://services.talend.org/service/types" 
+      xmlns="http://services.talend.org/service/types">
+      <xsd:element name="Info" type="xsd:string"/>
+      <xsd:element name="InfoResponse" type="xsd:string"/>
+    </xsd:schema>
+  </types>
+
+  <message name="getInfo">
+    <part element="stypes:Info" name="body"/>
+  </message>
+  <message name="getInfoResponse">
+    <part element="stypes:InfoResponse" name="body"/>
+  </message>
+
+  <portType name="cxfService">
+    <operation name="getInfo">
+      <input message="tns:getInfo"/>
+      <output message="tns:getInfoResponse"/>
+    </operation>
+  </portType>
+
+  <wsdl:binding name="cxfServiceBinding" type="tns:cxfService">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="getInfo">
+      <soap:operation soapAction="getInfo"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+
+  <wsdl:service name="cxfServiceProvider">
+    <wsdl:port binding="tns:cxfServiceBinding" name="cxfService">
+      <soap:address location="http://localhost:8080/cxfService/services/cxfServiceProvider/"/>
+    </wsdl:port>
+  </wsdl:service>
+
+</definitions>

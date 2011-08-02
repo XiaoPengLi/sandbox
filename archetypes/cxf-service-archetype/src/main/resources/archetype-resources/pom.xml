@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+		Copyright (c) 2011 Talend Inc. - www.talend.com All rights reserved.
+
+		This program and the accompanying materials are made available under
+		the terms of the Apache License v2.0 which accompanies this
+		distribution, and is available at
+		http://www.apache.org/licenses/LICENSE-2.0
+	--><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>${groupId}</groupId>
+	<artifactId>${artifactId}</artifactId>
+	<name>CXF-Service</name>
+    	<version>${version}</version>
+	<packaging>pom</packaging>
+
+	<!--
+	<parent>
+	    <groupId>org.talend.esb.templates</groupId>
+	    <artifactId>cxf-services</artifactId>
+	    <version>4.0</version>
+	    <relativePath>..</relativePath>
+	</parent>
+	-->
+
+	<properties>
+		<!-- common -->
+		<cxf.version>2.4.1</cxf.version>
+		<junit.version>4.8.2</junit.version>
+		<jetty.version>7.2.2.v20101205</jetty.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<!-- implementation -->
+		<cxf.wsdl.name>service.wsdl</cxf.wsdl.name>
+		<cxf.service.namespace>http://services.talend.org/cxf-service</cxf.service.namespace>
+		<cxf.service.name>cxfService</cxf.service.name>
+		<cxf.endpoint.name>cxfServiceProvider</cxf.endpoint.name>
+		<cxf.endpoint.address>http://localhost:8084/cxfservice/services/cxfServiceProvider</cxf.endpoint.address>
+		<cxf.service.interface>org.talend.services.cxfService</cxf.service.interface>
+		<cxf.client.bean>CxfServiceClient</cxf.client.bean>
+		<cxf.service.class.implementation>org.talend.services.cxfservice.service.CxfServiceImpl</cxf.service.class.implementation>
+		<!-- features -->
+	</properties>
+
+
+    <dependencies>
+	<dependency>
+		<groupId>org.apache.cxf</groupId>
+		<artifactId>cxf-rt-frontend-jaxws</artifactId>
+		<version>${cxf.version}</version>
+	</dependency>
+	<dependency>
+		<groupId>org.apache.cxf</groupId>
+		<artifactId>cxf-rt-transports-http</artifactId>
+		<version>${cxf.version}</version>
+	</dependency>
+        <!-- Jetty is needed if you're are not using the CXFServlet -->
+	<dependency>
+		<groupId>org.apache.cxf</groupId>
+		<artifactId>cxf-rt-transports-http-jetty</artifactId>
+		<version>${cxf.version}</version>
+	</dependency>
+    </dependencies>
+
+</project>
