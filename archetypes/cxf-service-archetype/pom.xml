@@ -4,7 +4,7 @@
 
   <groupId>org.talend.esb.templates</groupId>
   <artifactId>cxf-service-archetype</artifactId>
-  <version>4.0</version>
+  <version>4.0-SNAPSHOT</version>
   <packaging>maven-archetype</packaging>
 
   <name>cxf-service-archetype</name>
