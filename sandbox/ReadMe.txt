@@ -8,7 +8,7 @@ mvn install:install-file -DgroupId=org.talend.camel -DartifactId=systemRoutines 
 
 mvn install:install-file -DgroupId=org.talend.camel -DartifactId=userRoutines -Dversion=1.0.0 -Dfile=userRoutines.jar -Dpackaging=jar -DgeneratePom=true
 
-2,Change directory to "project", create a eclipse project using "mvn eclipse:eclipse"
+2,Change directory to "source" create a eclipse project using "mvn eclipse:eclipse"
 
 3,Compile project using "mvn compile"
 
