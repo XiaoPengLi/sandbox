@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2011 Talend Inc. - www.talend.com All rights reserved. 
+	This program and the accompanying materials are made available under the 
+	terms of the Apache License v2.0 which accompanies this distribution, and 
+	is available at http://www.apache.org/licenses/LICENSE-2.0 --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>${groupId}</groupId>
+	<artifactId>${artifactId}</artifactId>
+	<name>CXF Service Service</name>
+	<packaging>war</packaging>
+
+	<parent>
+	    <groupId>${groupId}</groupId>
+	    <artifactId>${rootArtifactId}</artifactId>
+	    <version>${version}</version>
+	    <relativePath>..</relativePath>
+	</parent>
+
+	<dependencies>
+		<dependency>
+		        <groupId>${groupId}</groupId>
+			<artifactId>common</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.16</version>
+		</dependency>
+		<!--
+		<dependency>
+			<groupId>org.talend.esb</groupId>
+			<artifactId>locator</artifactId>
+			<version>4.0</version>
+		</dependency>
+		-->
+	</dependencies>
+
+	<build>
+		<finalName>cxfService</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.1.1</version>
+				<configuration>
+				<webResources>
+					<resource>
+						<directory>src/main/webapp/</directory>
+						<filtering>true</filtering>
+						<includes>
+							<include>**/*.xml</include>
+						</includes>
+					</resource>
+				</webResources>
+				</configuration>
+			</plugin>
+		</plugins>
+		<resources>
+			<resource>
+				<directory>src/main/resources/</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/*.xml</include>
+					<include>**/*.properties</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>src/main/webapp/</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/*.xml</include>
+				</includes>
+			</resource>
+		</resources>
+
+	</build>
+
+
+</project>
